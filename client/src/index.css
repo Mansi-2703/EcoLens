@@ -1,0 +1,230 @@
+/* 🌍 Weather-AI-Dashboard Styling */
+
+/* ----------- Root Theme Variables ----------- */
+:root {
+  --bg: #0b0b0f;
+  --card: #0f1720;
+  --accent: #1ad8cd;
+  --muted: #9aa4ae;
+  --glass: rgba(255, 255, 255, 0.03);
+  color-scheme: dark;
+}
+
+/* Reset & Layout */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  font-family: "Inter", system-ui, Arial, sans-serif;
+}
+
+body {
+  background: linear-gradient(180deg, #030312 0%, #071022 100%);
+  color: #e6f0f0;
+}
+
+/* ----------- App Layout ----------- */
+.app {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ----------- Sidebar ----------- */
+.sidebar {
+  width: 260px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.02),
+    transparent
+  );
+  padding: 20px;
+  border-right: 1px solid rgba(255, 255, 255, 0.03);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.logo {
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 1.3rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.navbutton {
+  display: block;
+  padding: 10px 12px;
+  margin: 8px 0;
+  border-radius: 10px;
+  cursor: pointer;
+  background: transparent;
+  color: #e6f0f0;
+  border: none;
+  text-align: left;
+  font-size: 1rem;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.navbutton:hover {
+  background: var(--glass);
+  transform: scale(1.02);
+}
+
+/* ----------- Main Content ----------- */
+.content {
+  flex: 1;
+  padding: 20px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+/* Top row: title + coordinates */
+.toprow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.toprow h2 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 600;
+}
+
+.footer {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* ----------- Data Cards ----------- */
+.cards {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.card {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.03),
+    rgba(255, 255, 255, 0.01)
+  );
+  border-radius: 12px;
+  padding: 18px;
+  min-width: 180px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  flex: 1;
+  max-width: 220px;
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.card h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.card p {
+  margin: 6px 0 0 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+/* ----------- Map Section ----------- */
+.mapcontainer {
+  height: 420px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ----------- Suggestions ----------- */
+.suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.suggitem {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.suggitem strong {
+  display: block;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.suggitem p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #d0d4d6;
+  line-height: 1.4;
+}
+
+/* ----------- Scrollbar Styling ----------- */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ----------- Responsive Design ----------- */
+@media (max-width: 900px) {
+  .app {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .content {
+    padding: 16px;
+  }
+
+  .cards {
+    justify-content: space-evenly;
+  }
+
+  .mapcontainer {
+    height: 300px;
+  }
+}
