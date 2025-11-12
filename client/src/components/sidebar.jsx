@@ -13,10 +13,7 @@ export default function Sidebar({ isOpen, onToggle, onNavigate }) {
 
       <nav className="nav-section">
         <button className="navbutton" onClick={() => onNavigate("dashboard")}>
-          Dashboard
-        </button>
-        <button className="navbutton" onClick={() => onNavigate("globe")}>
-          Globe
+          Real-Time Monitor
         </button>
         <button className="navbutton" onClick={() => onNavigate("analytics")}>
           Analytics
