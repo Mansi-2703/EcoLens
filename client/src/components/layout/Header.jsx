@@ -33,7 +33,7 @@ export default function Header({ coordinates }) {
   }, [coordinates]);
 
   return (
-    <header className="header">
+    <header className="header"> 
       <h2 className="gradient-text">Global Realtime Monitor</h2>
 
       {coordinates ? (

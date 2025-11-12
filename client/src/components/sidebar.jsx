@@ -28,3 +28,4 @@ export default function Sidebar({ isOpen, onToggle, onNavigate }) {
     </aside>
   );
 }
+

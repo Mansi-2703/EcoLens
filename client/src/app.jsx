@@ -22,7 +22,12 @@ export default function App() {
         onToggle={toggleSidebar}
         onNavigate={setActivePage}
       />
-
+<div className="sticky-logo">
+  <img
+    src="/ecolens-logo.png" // or .jpg if that's what you have
+    alt="EcoLens Logo"
+  />
+</div>
       <main className="content">
         <Header coordinates={coordinates} />
 

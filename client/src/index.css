@@ -355,3 +355,22 @@ body,
   color: #b8e8f9;
 }
 
+/* ---------- Sticky Logo ---------- */
+.sticky-logo {
+  position: fixed;               /* Always stays in view */
+  top: 25px;
+  right: 25px;
+  z-index: 999;                  /* Stays above everything else */
+}
+
+.sticky-logo img {
+  width: 150px;                   /* adjust size as needed */
+  height: auto;
+  cursor: pointer;
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.sticky-logo img:hover {
+  transform: scale(1.1);
+  filter: brightness(1.2);
+}
