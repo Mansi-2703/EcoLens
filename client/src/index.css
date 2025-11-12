@@ -228,3 +228,60 @@ body,
     max-width: unset;
   }
 }
+/* -----------------header------------------ */
+/* Ensure font loads (place at top of file preferably) */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap');
+
+/* keep header compact */
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin: 1.5rem 0;
+  padding: 12px 20px;
+  background: rgba(255,255,255,0.02); /* optional - remove if you set elsewhere */
+  border-radius: 8px; /* optional */
+}
+
+/* Gradient text — clipped to glyphs and not the whole block */
+.header .gradient-text {
+  display: inline-block;             /* important: shrink element to the text width */
+  margin: 0;                         /* remove default margins that may create a block area */
+  padding: 0;                        /* remove padding */
+  font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  font-size: 2.5rem;                 /* tweak as needed */
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: 0.3px;
+
+  /* gradient background */
+  background: linear-gradient(270deg, #00f5a0 0%, #00c6ff 50%, #00e0b8 100%);
+  background-size: 600% 600%;
+  background-repeat: no-repeat;
+
+  /* CLIP TO TEXT — vendor-prefixed + fallback */
+  -webkit-background-clip: text;     /* WebKit/Blink (Chrome, Safari) */
+  background-clip: text;             /* standard (some browsers) */
+  -webkit-text-fill-color: transparent; /* Chrome/Safari: make text transparent so gradient shows */
+  color: transparent;                /* fallback: make text transparent by default */
+
+  /* animation */
+  animation: gradientShift 8s ease infinite;
+}
+
+/* animation stays the same */
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* coords */
+.coords {
+  font-size: 1.05rem;
+  margin-top: 0.4rem;
+  color: #b8e8f9;
+}
+
