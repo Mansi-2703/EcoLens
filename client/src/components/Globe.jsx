@@ -1,15 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Globe from 'react-globe.gl';
 import { getAQIData } from '../services/aqiService';
+import { getClimateData } from '../services/climateService';
 import citiesData from '../data/world-cities.json'; // 🏙 Your cities dataset
 import LoaderOverlay from './ui/LoaderOverlay';
 import AQIInfoBox from './ui/AQIInfoBox';
+import WeatherInfoBox from './ui/WeatherInfoBox';
 
 
 const GlobeComponent = ({ onPick }) => {
   const globeRef = useRef();
   const [selectedCoords, setSelectedCoords] = useState(null);
   const [aqiData, setAqiData] = useState(null);
+  const [weatherData, setWeatherData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [cities, setCities] = useState([]); // 🆕 for city hover tooltips
 
@@ -27,48 +30,53 @@ const GlobeComponent = ({ onPick }) => {
     setCities(cityList);
   }, []);
 
-  // 🌐 Get user's location + fetch AQI
+  // 🌐 Get user's location + fetch AQI and Weather
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           setSelectedCoords({ lat: latitude, lng: longitude });
-          fetchAQI(latitude, longitude);
+          fetchData(latitude, longitude);
         },
         (error) => {
           console.warn('Geolocation error:', error);
           // Default location if geolocation fails
           setSelectedCoords({ lat: 20, lng: 0 });
-          fetchAQI(20, 0);
+          fetchData(20, 0);
         }
       );
     } else {
       // Default if geolocation not supported
       setSelectedCoords({ lat: 20, lng: 0 });
-      fetchAQI(20, 0);
+      fetchData(20, 0);
     }
   }, []);
 
-  // 🧭 AQI fetcher
-  const fetchAQI = async (lat, lng) => {
+  // 🧭 Fetch both AQI and Weather data
+  const fetchData = async (lat, lng) => {
     setLoading(true);
     try {
-      const data = await getAQIData(lat, lng);
-      setAqiData(data);
+      const [aqi, weather] = await Promise.all([
+        getAQIData(lat, lng),
+        getClimateData(lat, lng)
+      ]);
+      setAqiData(aqi);
+      setWeatherData(weather);
     } catch (error) {
-      console.error('Error fetching AQI data:', error);
+      console.error('Error fetching data:', error);
       setAqiData(null);
+      setWeatherData(null);
     } finally {
       setLoading(false);
     }
   };
 
-  // 🖱 Handle globe click → show red dot + fetch AQI
+  // 🖱 Handle globe click → show red dot + fetch data
   const handleGlobeClick = (point) => {
     const { lat, lng } = point;
     setSelectedCoords({ lat, lng });
-    fetchAQI(lat, lng);
+    fetchData(lat, lng);
     if (onPick) onPick(lat, lng);
   };
 
@@ -78,35 +86,40 @@ const GlobeComponent = ({ onPick }) => {
     : [];
 
    return (
-    <div style={{ position: 'relative', width: '100%', height: '500px' }}>
-      <Globe
-        ref={globeRef}
-        globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
-        backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
-        pointsData={pointsData}
-        pointLat="lat"
-        pointLng="lng"
-        pointColor="color"
-        pointAltitude={0.01}
-        pointRadius="size"
-        onGlobeClick={handleGlobeClick}
-        width={800}
-        height={500}
-        labelsData={cities}
-        labelLat="lat"
-        labelLng="lng"
-        labelText={() => ""}
-        labelDotRadius={0.1}
-        labelLabel={(d) =>
-          `<div style="font-size:13px;line-height:1.4;">
-            <b>${d.city}</b><br/>${d.country}
-          </div>`
-        }
-      />
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+      <div style={{ position: 'relative', width: '100%', height: '500px' }}>
+        <Globe
+          ref={globeRef}
+          globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
+          backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
+          pointsData={pointsData}
+          pointLat="lat"
+          pointLng="lng"
+          pointColor="color"
+          pointAltitude={0.01}
+          pointRadius="size"
+          onGlobeClick={handleGlobeClick}
+          width={1000}
+          height={500}
+          labelsData={cities}
+          labelLat="lat"
+          labelLng="lng"
+          labelText={() => ""}
+          labelDotRadius={0.1}
+          labelLabel={(d) =>
+            `<div style="font-size:13px;line-height:1.4;">
+              <b>${d.city}</b><br/>${d.country}
+            </div>`
+          }
+        />
 
-      {/* 🆕 Reusable UI Components */}
-      {loading && <LoaderOverlay />}
-      {selectedCoords && <AQIInfoBox coords={selectedCoords} data={aqiData} />}
+        {/* 🆕 Reusable UI Components */}
+        {loading && <LoaderOverlay />}
+        {selectedCoords && <AQIInfoBox coords={selectedCoords} data={aqiData} />}
+      </div>
+      
+      {/* Weather card below the globe */}
+      {selectedCoords && <WeatherInfoBox coords={selectedCoords} data={weatherData} />}
     </div>
   );
 };
