@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Sidebar from "./components/layout/Sidebar";
 import Header from "./components/layout/Header";
+import ForestMap from "./components/layout/ForestMap";
 import GlobePage from "./components/Globe"; // This holds your Globe component
 import Aqi from "./components/predictions/Aqi";
 import Marine from "./components/predictions/Marine";
@@ -25,27 +26,32 @@ export default function App() {
         onToggle={toggleSidebar}
         onNavigate={setActivePage}
       />
-<div className="sticky-logo">
-  <img
-    src="/ecolens-logo.png" // or .jpg if that's what you have
-    alt="EcoLens Logo"
-  />
-</div>
-      <main className="content">
+
+      <div className="sticky-logo">
+        <img
+          src="/ecolens-logo.png" // or .jpg if that's what you have
+          alt="EcoLens Logo"
+        />
+      </div>
+
+      <main className="content flex flex-col flex-1 min-h-screen p-0">
         {/* Show header only on dashboard page */}
         {activePage === "dashboard" && <Header coordinates={coordinates} />}
 
-        {/* 🌍 Dashboard shows Global Air Quality Monitor - labelled in sidebar as Realtime Monitor */}
+        {/* 🌍 Dashboard shows Global Air Quality Monitor */}
         {activePage === "dashboard" && <GlobePage onPick={handleGlobePick} />}
 
-        {/* Forest Cover (was Analytics) */}
-        {activePage === "analytics" && <div className="page">Forest Cover Page (placeholder)</div>}
+        {/* Forest Cover / Analytics */}
+        {activePage === "analytics" && <ForestMap />}
 
+
+
+    
         {/* Misc placeholders kept for compatibility */}
         {activePage === "reports" && <div className="page">Reports Page</div>}
         {activePage === "settings" && <div className="page">Settings Page</div>}
 
-        {/* Prediction pages (blank for now) */}
+        {/* Prediction pages */}
         {activePage === "aqi" && <Aqi />}
         {activePage === "marine" && <Marine />}
         {activePage === "climate" && <Climate />}
