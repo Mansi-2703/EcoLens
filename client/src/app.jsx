@@ -1,5 +1,6 @@
-// client/src/App.jsx
 import React, { useState } from "react";
+import Sidebar from "./components/layout/Sidebar";
+import Header from "./components/layout/Header";
 import Globe from "./components/Globe";
 
 export default function App() {
@@ -10,11 +11,14 @@ export default function App() {
   };
 
   return (
-    <div style={{ padding: 20, color: "#fff", fontFamily: "Segoe UI, Roboto, sans-serif", background: "#001122", minHeight: "100vh" }}>
-      <h2>EcoLens Globe</h2>
-      <p>Selected Coordinates: {coordinates ? `${coordinates.lat.toFixed(3)}, ${coordinates.lon.toFixed(3)}` : "none"}</p>
-
-      <Globe onPick={handleGlobePick} />
+    <div className="app">
+      <Sidebar />
+      <main className="content">
+        <Header coordinates={coordinates} />
+        <div className="mapcontainer">
+          <Globe onPick={handleGlobePick} />
+        </div>
+      </main>
     </div>
   );
 }

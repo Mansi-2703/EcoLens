@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import Globe from 'react-globe.gl';
 import { getAQIData } from '../services/aqiService';
 import citiesData from '../data/world-cities.json'; // 🏙 Your cities dataset
+import LoaderOverlay from './ui/LoaderOverlay';
+import AQIInfoBox from './ui/AQIInfoBox';
+
 
 const GlobeComponent = ({ onPick }) => {
   const globeRef = useRef();
@@ -74,7 +77,7 @@ const GlobeComponent = ({ onPick }) => {
     ? [{ lat: selectedCoords.lat, lng: selectedCoords.lng, size: 0.5, color: 'red' }]
     : [];
 
-  return (
+   return (
     <div style={{ position: 'relative', width: '100%', height: '500px' }}>
       <Globe
         ref={globeRef}
@@ -89,12 +92,10 @@ const GlobeComponent = ({ onPick }) => {
         onGlobeClick={handleGlobeClick}
         width={800}
         height={500}
-
-        // 🏙 City hover tooltips (added feature)
         labelsData={cities}
         labelLat="lat"
         labelLng="lng"
-        labelText={() => ""} // no visible city name text
+        labelText={() => ""}
         labelDotRadius={0.1}
         labelLabel={(d) =>
           `<div style="font-size:13px;line-height:1.4;">
@@ -103,88 +104,9 @@ const GlobeComponent = ({ onPick }) => {
         }
       />
 
-      {/* 🌀 Loading indicator */}
-      {loading && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 10,
-            left: 10,
-            background: 'rgba(0,0,0,0.7)',
-            color: 'white',
-            padding: '5px 10px',
-            borderRadius: '5px',
-          }}
-        >
-          Loading AQI data...
-        </div>
-      )}
-
-      {/* 📦 AQI info box */}
-      {selectedCoords && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 10,
-            right: 10,
-            background: 'rgba(0,0,0,0.7)',
-            color: 'white',
-            padding: '10px',
-            borderRadius: '5px',
-            maxWidth: '300px',
-            maxHeight: '400px',
-            overflowY: 'auto',
-          }}
-        >
-          <div><strong>Coordinates:</strong></div>
-          <div>Lat: {selectedCoords.lat.toFixed(3)}</div>
-          <div>Lng: {selectedCoords.lng.toFixed(3)}</div>
-
-          {aqiData && aqiData.openMeteo && aqiData.openMeteo.latestAQI !== null && (
-            <div><strong>AQI (US):</strong> {aqiData.openMeteo.latestAQI}</div>
-          )}
-
-          {aqiData && aqiData.openMeteo && aqiData.openMeteo.hourly && (
-            <div style={{ marginTop: '10px' }}>
-              <div><strong>Latest Parameters (Open-Meteo):</strong></div>
-              {(() => {
-                const hourly = aqiData.openMeteo.hourly;
-                const latestIndex = hourly.time.length - 1;
-                return (
-                  <div>
-                    {hourly.pm10[latestIndex] !== null && <div>PM10: {hourly.pm10[latestIndex]} µg/m³</div>}
-                    {hourly.pm2_5[latestIndex] !== null && <div>PM2.5: {hourly.pm2_5[latestIndex]} µg/m³</div>}
-                  </div>
-                );
-              })()}
-            </div>
-          )}
-
-          {aqiData && aqiData.openAQ && aqiData.openAQ.results && aqiData.openAQ.results.length > 0 && (
-            <div style={{ marginTop: '10px' }}>
-              <div><strong>Nearby Stations (OpenAQ):</strong></div>
-              {aqiData.openAQ.results.slice(0, 2).map((station, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    marginTop: '5px',
-                    fontSize: '12px',
-                    borderTop: '1px solid #555',
-                    paddingTop: '5px',
-                  }}
-                >
-                  <div><strong>{station.location}</strong></div>
-                  {station.measurements && station.measurements.slice(0, 3).map((meas, midx) => (
-                    <div key={midx}>
-                      {meas.parameter.toUpperCase()}: {meas.value} {meas.unit}
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      {/* 🆕 Reusable UI Components */}
+      {loading && <LoaderOverlay />}
+      {selectedCoords && <AQIInfoBox coords={selectedCoords} data={aqiData} />}
     </div>
   );
 };

@@ -1,12 +1,17 @@
-/* 🌍 Weather-AI-Dashboard Styling */
+/* 🌍 EcoLens Dashboard Styling */
 
 /* ----------- Root Theme Variables ----------- */
 :root {
   --bg: #0b0b0f;
-  --card: #0f1720;
+  --card: #101820;
   --accent: #1ad8cd;
   --muted: #9aa4ae;
-  --glass: rgba(255, 255, 255, 0.03);
+  --good: #50f08a;
+  --moderate: #f1f04e;
+  --unhealthy-sensitive: #f5a623;
+  --unhealthy: #f55d3e;
+  --very-unhealthy: #9b2fae;
+  --hazardous: #7e0023;
   color-scheme: dark;
 }
 
@@ -21,30 +26,22 @@ body,
   height: 100%;
   margin: 0;
   font-family: "Inter", system-ui, Arial, sans-serif;
-}
-
-body {
-  background: linear-gradient(180deg, #030312 0%, #071022 100%);
+  background: var(--bg);
   color: #e6f0f0;
 }
 
 /* ----------- App Layout ----------- */
 .app {
   display: flex;
-  height: 100vh;
+  min-height: 100vh;
   overflow: hidden;
 }
 
-/* ----------- Sidebar ----------- */
 .sidebar {
-  width: 260px;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.02),
-    transparent
-  );
+  width: 240px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
   padding: 20px;
-  border-right: 1px solid rgba(255, 255, 255, 0.03);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -59,147 +56,148 @@ body {
 }
 
 .navbutton {
-  display: block;
-  padding: 10px 12px;
-  margin: 8px 0;
-  border-radius: 10px;
-  cursor: pointer;
   background: transparent;
   color: #e6f0f0;
   border: none;
   text-align: left;
   font-size: 1rem;
-  transition: background 0.2s ease, transform 0.1s ease;
+  padding: 10px 12px;
+  margin: 6px 0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
 }
 
 .navbutton:hover {
-  background: var(--glass);
-  transform: scale(1.02);
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateX(5px);
+}
+
+/* ----------- Header ----------- */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 15px 20px;
+  border-radius: 12px;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--accent);
+}
+
+.coords {
+  font-size: 0.95rem;
+  color: var(--muted);
 }
 
 /* ----------- Main Content ----------- */
 .content {
   flex: 1;
-  padding: 20px 30px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  padding: 20px 30px;
+  gap: 20px;
   overflow-y: auto;
 }
 
-/* Top row: title + coordinates */
-.toprow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.toprow h2 {
-  margin: 0;
-  font-size: 1.6rem;
-  font-weight: 600;
-}
-
-.footer {
-  font-size: 0.9rem;
-  color: var(--muted);
-}
-
-/* ----------- Data Cards ----------- */
-.cards {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.card {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.03),
-    rgba(255, 255, 255, 0.01)
-  );
-  border-radius: 12px;
-  padding: 18px;
-  min-width: 180px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  flex: 1;
-  max-width: 220px;
-  text-align: center;
-  transition: transform 0.2s ease;
-}
-
-.card:hover {
-  transform: translateY(-5px);
-}
-
-.card h4 {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--muted);
-}
-
-.card p {
-  margin: 6px 0 0 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
-/* ----------- Map Section ----------- */
 .mapcontainer {
-  height: 420px;
-  border-radius: 12px;
+  position: relative;
+  height: 500px;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* ----------- Suggestions ----------- */
-.suggestions {
+/* ----------- Loader Overlay ----------- */
+.loader-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 5, 15, 0.7);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: 1rem;
+  z-index: 5;
+  backdrop-filter: blur(4px);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-top: 3px solid var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ----------- AQI Info Box ----------- */
+.aqi-info-box {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(10, 15, 25, 0.9);
+  color: #e6f0f0;
+  padding: 16px 18px;
+  border-radius: 12px;
+  max-width: 280px;
+  border-left: 4px solid var(--accent);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  font-size: 0.9rem;
+  overflow-y: auto;
+  max-height: 80%;
+  animation: fadeIn 0.4s ease;
+}
+
+.aqi-info-box h4,
+.aqi-info-box h5 {
+  margin: 0 0 8px 0;
+  color: var(--accent);
+}
+
+.aqi-info-box .coords,
+.aqi-info-box .params,
+.aqi-info-box .stations {
   margin-top: 8px;
 }
 
-.suggitem {
-  background: rgba(255, 255, 255, 0.02);
-  padding: 12px 14px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+.aqi-value {
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 1rem;
 }
 
-.suggitem strong {
-  display: block;
-  color: var(--accent);
-  font-weight: 600;
-  margin-bottom: 6px;
+.station {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 8px;
+  padding-top: 6px;
+  font-size: 0.85rem;
 }
 
-.suggitem p {
-  margin: 0;
-  font-size: 0.9rem;
-  color: #d0d4d6;
-  line-height: 1.4;
-}
-
-/* ----------- Scrollbar Styling ----------- */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02);
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.12);
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ----------- Responsive Design ----------- */
@@ -211,8 +209,8 @@ body {
   .sidebar {
     width: 100%;
     flex-direction: row;
+    justify-content: space-around;
     overflow-x: auto;
-    border-right: none;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
 
@@ -220,11 +218,13 @@ body {
     padding: 16px;
   }
 
-  .cards {
-    justify-content: space-evenly;
+  .mapcontainer {
+    height: 380px;
   }
 
-  .mapcontainer {
-    height: 300px;
+  .aqi-info-box {
+    right: 10px;
+    left: 10px;
+    max-width: unset;
   }
 }
