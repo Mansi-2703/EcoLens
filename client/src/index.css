@@ -29,6 +29,84 @@ body,
   background: var(--bg);
   color: #e6f0f0;
 }
+/* ---------- Sidebar Layout ---------- */
+.sidebar {
+  display: flex;
+  flex-direction: column;       /* Stack items vertically */
+  justify-content: flex-start;
+  align-items: flex-start;
+  width: 240px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 20px;
+  transition: width 0.3s ease;
+}
+
+.sidebar.collapsed {
+  width: 70px;
+}
+
+/* Sidebar Header: logo + toggle button */
+.sidebar-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+/* Navigation buttons stacked vertically */
+.nav-section {
+  display: flex;
+  flex-direction: column;       /* Force vertical stacking */
+  gap: 10px;                    /* Space between buttons */
+  width: 100%;
+}
+
+/* Button styling */
+.navbutton {
+  width: 100%;
+  padding: 12px 15px;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #e6f0f0;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.navbutton:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--accent);
+  transform: translateX(5px);
+}
+
+/* Collapsed state — hides text, keeps small bullet/icon */
+.sidebar.collapsed .navbutton {
+  font-size: 0;
+  padding: 12px;
+}
+
+.sidebar.collapsed .navbutton::before {
+  content: "•";
+  font-size: 1.2rem;
+  color: var(--accent);
+}
+
+/* Toggle button */
+.toggle-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.toggle-btn:hover {
+  transform: rotate(90deg);
+  transition: transform 0.3s ease;
+}
 
 /* ----------- App Layout ----------- */
 .app {
@@ -37,15 +115,7 @@ body,
   overflow: hidden;
 }
 
-.sidebar {
-  width: 240px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-}
+
 
 .logo {
   font-weight: 700;
