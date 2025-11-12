@@ -2,10 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import Globe from 'react-globe.gl';
 import { getAQIData } from '../services/aqiService';
 import { getClimateData } from '../services/climateService';
+import { getMarineData } from '../services/marineService';
 import citiesData from '../data/world-cities.json'; // 🏙 Your cities dataset
 import LoaderOverlay from './ui/LoaderOverlay';
 import AQIInfoBox from './ui/AQIInfoBox';
 import WeatherInfoBox from './ui/WeatherInfoBox';
+import MarineInfoBox from './ui/MarineInfoBox';
 
 
 const GlobeComponent = ({ onPick }) => {
@@ -13,6 +15,7 @@ const GlobeComponent = ({ onPick }) => {
   const [selectedCoords, setSelectedCoords] = useState(null);
   const [aqiData, setAqiData] = useState(null);
   const [weatherData, setWeatherData] = useState(null);
+  const [marineData, setMarineData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [cities, setCities] = useState([]); // 🆕 for city hover tooltips
 
@@ -53,20 +56,23 @@ const GlobeComponent = ({ onPick }) => {
     }
   }, []);
 
-  // 🧭 Fetch both AQI and Weather data
+  // 🧭 Fetch AQI, Weather, and Marine data
   const fetchData = async (lat, lng) => {
     setLoading(true);
     try {
-      const [aqi, weather] = await Promise.all([
+      const [aqi, weather, marine] = await Promise.all([
         getAQIData(lat, lng),
-        getClimateData(lat, lng)
+        getClimateData(lat, lng),
+        getMarineData(lat, lng)
       ]);
       setAqiData(aqi);
       setWeatherData(weather);
+      setMarineData(marine);
     } catch (error) {
       console.error('Error fetching data:', error);
       setAqiData(null);
       setWeatherData(null);
+      setMarineData(null);
     } finally {
       setLoading(false);
     }
@@ -118,8 +124,11 @@ const GlobeComponent = ({ onPick }) => {
         {selectedCoords && <AQIInfoBox coords={selectedCoords} data={aqiData} />}
       </div>
       
-      {/* Weather card below the globe */}
-      {selectedCoords && <WeatherInfoBox coords={selectedCoords} data={weatherData} />}
+      {/* Weather and Marine cards below the globe */}
+      <div style={{ display: 'flex', gap: '20px', marginTop: '20px' }}>
+        {selectedCoords && <WeatherInfoBox coords={selectedCoords} data={weatherData} />}
+        {selectedCoords && <MarineInfoBox coords={selectedCoords} data={marineData} />}
+      </div>
     </div>
   );
 };

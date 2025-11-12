@@ -270,7 +270,8 @@ body,
   color: #e6f0f0;
   padding: 16px 18px;
   border-radius: 12px;
-  max-width: 280px;
+  width: 280px;
+  min-width: 280px;
   border-left: 4px solid #22c55e;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
   font-size: 0.9rem;
@@ -325,6 +326,61 @@ body,
 .weather-time small {
   color: var(--muted);
   font-size: 0.75rem;
+}
+
+/* ----------- Marine Info Box ----------- */
+.marine-info-box {
+  height: 290px;
+  position: static;
+  background: rgba(10, 15, 25, 0.9);
+  color: #e6f0f0;
+  padding: 16px 18px;
+  border-radius: 12px;
+  width: 280px;
+  min-width: 280px;
+  border-left: 4px solid #3b82f6;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  font-size: 0.9rem;
+  overflow-y: auto;
+  animation: fadeIn 0.4s ease;
+   margin-top: 20px; 
+}
+
+.marine-info-box h4 {
+  margin: 0 0 8px 0;
+  color: #3b82f6;
+}
+
+.marine-info-box .coords {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.marine-info-box .coords p {
+  margin: 4px 0;
+}
+
+.marine-params {
+  margin-top: 12px;
+}
+
+.marine-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.marine-item .label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.marine-item .value {
+  font-weight: bold;
+  color: #3b82f6;
 }
 
 @keyframes fadeIn {
@@ -493,4 +549,3 @@ body,
   background: #16c4ba;
   transform: translateY(-2px);
 }
-
