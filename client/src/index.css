@@ -221,7 +221,7 @@ body,
 /* ----------- AQI Info Box ----------- */
 .aqi-info-box {
   position: absolute;
-  top: 20px;
+  top: 1px;
   right: 20px;
   background: rgba(10, 15, 25, 0.9);
   color: #e6f0f0;
@@ -260,6 +260,71 @@ body,
   margin-top: 8px;
   padding-top: 6px;
   font-size: 0.85rem;
+}
+
+/* ----------- Weather Info Box ----------- */
+.weather-info-box {
+  position: static;
+  margin-top: 20px;
+  background: rgba(10, 15, 25, 0.9);
+  color: #e6f0f0;
+  padding: 16px 18px;
+  border-radius: 12px;
+  max-width: 280px;
+  border-left: 4px solid #22c55e;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  font-size: 0.9rem;
+  overflow-y: auto;
+  animation: fadeIn 0.4s ease;
+}
+
+.weather-info-box h4 {
+  margin: 0 0 8px 0;
+  color: var(--accent);
+}
+
+.weather-info-box .coords {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.weather-info-box .coords p {
+  margin: 4px 0;
+}
+
+.weather-params {
+  margin-top: 12px;
+}
+
+.weather-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.weather-item .label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.weather-item .value {
+  font-weight: bold;
+  color: var(--accent);
+}
+
+.weather-time {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+.weather-time small {
+  color: var(--muted);
+  font-size: 0.75rem;
 }
 
 @keyframes fadeIn {
@@ -374,3 +439,58 @@ body,
   transform: scale(1.1);
   filter: brightness(1.2);
 }
+
+/* ----------- Climate Page Styles ----------- */
+.climate-page {
+  padding: 20px;
+}
+
+.climate-page .loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.climate-page h3 {
+  color: var(--accent);
+  margin-bottom: 15px;
+}
+
+.climate-page h4 {
+  color: var(--accent);
+  font-size: 1rem;
+  margin-top: 10px;
+}
+
+.climate-page table {
+  font-size: 0.9rem;
+}
+
+.climate-page table th {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.climate-page input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e6f0f0;
+  border-radius: 6px;
+}
+
+.climate-page button {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.climate-page button:hover {
+  background: #16c4ba;
+  transform: translateY(-2px);
+}
+
