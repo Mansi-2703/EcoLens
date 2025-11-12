@@ -15,6 +15,9 @@
   color-scheme: dark;
 }
 
+/* Ensure font loads (place at top of file preferably) */
+/* @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap'); */
+
 /* Reset & Layout */
 * {
   box-sizing: border-box;
@@ -299,9 +302,6 @@ body,
   }
 }
 /* -----------------header------------------ */
-/* Ensure font loads (place at top of file preferably) */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap');
-
 /* keep header compact */
 .header {
   display: flex;

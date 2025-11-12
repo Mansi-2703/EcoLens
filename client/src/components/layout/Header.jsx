@@ -38,7 +38,7 @@ export default function Header({ coordinates }) {
 
       {coordinates ? (
         <p className="coords">
-           {locationName ? locationName : "Fetching location..."}
+          📍 {locationName ? locationName : "Fetching location..."}
         </p>
       ) : (
         <p className="coords">Select a location on the globe</p>
