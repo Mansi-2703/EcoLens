@@ -32,7 +32,8 @@ export default function App() {
   />
 </div>
       <main className="content">
-        <Header coordinates={coordinates} />
+        {/* Show header only on dashboard page */}
+        {activePage === "dashboard" && <Header coordinates={coordinates} />}
 
         {/* 🌍 Dashboard shows Global Air Quality Monitor - labelled in sidebar as Realtime Monitor */}
         {activePage === "dashboard" && <GlobePage onPick={handleGlobePick} />}
