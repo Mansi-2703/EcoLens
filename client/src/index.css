@@ -232,6 +232,9 @@ body,
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
   font-size: 0.9rem;
   overflow-y: auto;
+  /* Hide vertical scrollbar but keep scrolling functional */
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
   max-height: 80%;
   animation: fadeIn 0.4s ease;
 }
@@ -371,6 +374,13 @@ body,
   align-items: center;
   padding: 8px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Webkit (Chrome, Safari) hide scrollbar for marine box */
+.marine-info-box::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 
 .marine-item .label {

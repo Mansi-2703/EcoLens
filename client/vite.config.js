@@ -45,6 +45,15 @@ resolve: {
         path.resolve(__dirname, "node_modules/cesium"),
       ],
     },
+    // Proxy API requests to the backend during development to avoid CORS
+    proxy: {
+      // forward /api/* to the backend server (change port if your server uses a different one)
+      "/api": {
+        target: "http://localhost:4000",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
 
   define: {

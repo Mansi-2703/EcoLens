@@ -5,6 +5,7 @@ import aqiRoutes from "./routes/aqiRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import climateRoutes from "./routes/climateRoutes.js";
 import marineRoutes from "./routes/marineRoutes.js";
+import geoRoutes from "./routes/geoRoutes.js";
 
 const app = express();
 app.use(cors());
@@ -15,5 +16,6 @@ app.use("/api/aqi", aqiRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/climate", climateRoutes);
 app.use("/api/marine", marineRoutes);
+app.use("/api/geo", geoRoutes);
 
 export default app;
