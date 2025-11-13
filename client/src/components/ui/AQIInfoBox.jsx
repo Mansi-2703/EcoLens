@@ -24,34 +24,44 @@ export default function AQIInfoBox({ coords, data }) {
 
   return (
     <div className="aqi-info-box" style={{ borderLeft: `4px solid ${boxColor}` }}>
-      <h4>Selected Location</h4>
-      <div className="coords">
-        <p>Lat: {coords.lat.toFixed(3)}</p>
-        <p>Lng: {coords.lng.toFixed(3)}</p>
-      </div>
+      <h4>Air Quality Index</h4>
 
-      {aqi && (
-        <div className="aqi-value">
-          <span className="label">AQI (US):</span>
-          <span className="value" style={{ color: boxColor, fontWeight: "bold" }}>
-            {aqi}
-          </span>
-        </div>
-      )}
+      {(openM && (current || hourly)) && (
+        <div className="aqi-params">
+          <div className="aqi-item">
+            <span className="label">🌫️ AQI (US):</span>
+            <span className="value" style={{ color: boxColor }}>
+              {aqi ?? 'N/A'}
+            </span>
+          </div>
 
-      {data?.openMeteo?.hourly && (
-        <div className="params">
-          <h5>Latest Parameters (Open-Meteo)</h5>
-          {(() => {
-            const h = data.openMeteo.hourly;
-            const i = h.time.length - 1;
-            return (
-              <>
-                {h.pm10[i] && <p>PM10: {h.pm10[i]} µg/m³</p>}
-                {h.pm2_5[i] && <p>PM2.5: {h.pm2_5[i]} µg/m³</p>}
-              </>
-            );
-          })()}
+          <div className="aqi-item">
+            <span className="label">💨 PM10:</span>
+            <span className="value">
+              {current?.pm10 ?? (lastIndex >= 0 ? hourly.pm10[lastIndex] : null) ?? 'N/A'} µg/m³
+            </span>
+          </div>
+
+          <div className="aqi-item">
+            <span className="label">🌬️ PM2.5:</span>
+            <span className="value">
+              {current?.pm2_5 ?? (lastIndex >= 0 ? hourly.pm2_5[lastIndex] : null) ?? 'N/A'} µg/m³
+            </span>
+          </div>
+
+          <div className="aqi-item">
+            <span className="label">☁️ CO:</span>
+            <span className="value">
+              {current?.carbon_monoxide ?? (lastIndex >= 0 ? hourly.carbon_monoxide[lastIndex] : null) ?? 'N/A'} µg/m³
+            </span>
+          </div>
+
+          <div className="aqi-item">
+            <span className="label">🏜️ Dust:</span>
+            <span className="value">
+              {current?.dust ?? (lastIndex >= 0 ? hourly.dust[lastIndex] : null) ?? 'N/A'} µg/m³
+            </span>
+          </div>
         </div>
       )}
 
