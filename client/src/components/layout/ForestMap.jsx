@@ -4,8 +4,9 @@ import React from "react";
 const ForestMap = () => {
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 h-20 bg-gradient-to-r from-green-900 to-green-700 flex items-center justify-center px-6 shadow-lg" style={{ zIndex: 10 }}>
-        <h1 className="text-center text-transparent bg-clip-text bg-gradient-to-r from-green-300 to-green-200 text-3xl font-bold" style={{ textShadow: '0 0 10px rgba(134, 239, 172, 0.6)' }}>Forest Cover</h1>
+      <header className="header" style={{ height: '108px', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: '0', paddingBottom: '0' }}>
+        <h2 className="gradient-text">Global Forest Cover</h2>
+        <p className="coords">Real-time global forest cover monitoring</p>
       </header>
       <div
         className="fixed left-0 right-0 bottom-0 flex justify-center items-center bg-[#0b0b0f]"
