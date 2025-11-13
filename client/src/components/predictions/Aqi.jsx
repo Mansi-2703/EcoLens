@@ -18,6 +18,7 @@ export default function Aqi() {
   const [error, setError] = useState(null);
   const [lat, setLat] = useState(40.7128); // Default New York
   const [lon, setLon] = useState(-74.0060);
+  const [mapType, setMapType] = useState('street'); // 'street' or 'satellite'
   const gridRef = useRef(null);
 
   // Fetch AQI data whenever lat/lon changes
@@ -103,6 +104,20 @@ export default function Aqi() {
 
       {/* 2D Map */}
       <div className="map-container">
+        <div className="map-toggle">
+          <button
+            className={`toggle-btn ${mapType === 'street' ? 'active' : ''}`}
+            onClick={() => setMapType('street')}
+          >
+            🗺️ Street
+          </button>
+          <button
+            className={`toggle-btn ${mapType === 'satellite' ? 'active' : ''}`}
+            onClick={() => setMapType('satellite')}
+          >
+            🛰️ Satellite
+          </button>
+        </div>
         <MapContainer
           center={[lat, lon]}
           zoom={5}
@@ -110,8 +125,16 @@ export default function Aqi() {
           key={lat + ',' + lon}
         >
           <TileLayer
-            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
-            attribution='Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom'
+            url={
+              mapType === 'satellite'
+                ? 'https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.png'
+                : 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}'
+            }
+            attribution={
+              mapType === 'satellite'
+                ? '&copy; CNES, Distribution Airbus DS, © Airbus DS, © PlanetObserver (Contains Copernicus Data) | &copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                : 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom'
+            }
           />
           <LocationMarker />
         </MapContainer>
@@ -300,6 +323,44 @@ export default function Aqi() {
           width: 100%;
           max-width: 1400px;
           margin-bottom: 40px;
+          position: relative;
+        }
+
+        .map-toggle {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          z-index: 1000;
+          display: flex;
+          gap: 8px;
+          background: rgba(30, 41, 59, 0.8);
+          border-radius: 8px;
+          padding: 8px;
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .toggle-btn {
+          background: rgba(51, 65, 85, 0.5);
+          border: 1px solid rgba(148, 163, 184, 0.3);
+          border-radius: 6px;
+          padding: 6px 12px;
+          color: #cbd5e1;
+          font-size: 12px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .toggle-btn:hover {
+          background: rgba(51, 65, 85, 0.7);
+          border-color: #3b82f6;
+        }
+
+        .toggle-btn.active {
+          background: #3b82f6;
+          border-color: #3b82f6;
+          color: #f1f5f9;
         }
 
         .location-inputs {
