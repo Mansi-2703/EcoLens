@@ -11,33 +11,20 @@ export async function getAQI(req, res) {
     const latitude = Number(lat);
     const longitude = Number(lon);
 
-    // Open-Meteo Air Quality API params
-    // Request hourly series for PM10, PM2.5, US AQI, carbon monoxide and dust
-    // and also request current/latest values for those metrics
-    const hourlyFields = ['pm10', 'pm2_5', 'us_aqi', 'carbon_monoxide', 'dust'].join(',');
-    const currentFields = ['us_aqi', 'pm10', 'pm2_5', 'carbon_monoxide', 'dust'].join(',');
+    // Open-Meteo Air Quality API - fetch current values only
+    const currentFields = ['us_aqi', 'pm10', 'pm2_5', 'carbon_monoxide', 'nitrogen_dioxide', 'ozone', 'dust', 'uv_index'].join(',');
 
     const omParams = new URLSearchParams({
       latitude: String(latitude),
       longitude: String(longitude),
-      hourly: hourlyFields,
       current: currentFields,
-      timezone: 'UTC',
+      timezone: 'auto',
     });
 
     const openMeteoUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?${omParams.toString()}`;
 
-    // OpenAQ latest measurements near the coordinate
-    const radius = 10000; // meters
-    const openAqUrl = `https://api.openaq.org/v2/latest?coordinates=${encodeURIComponent(
-      latitude
-    )},${encodeURIComponent(longitude)}&radius=${radius}`;
-
-    // Fetch both APIs in parallel
-    const [omResp, openAqResp] = await Promise.all([
-      fetch(openMeteoUrl),
-      fetch(openAqUrl),
-    ]);
+    // Fetch Open-Meteo Air Quality API
+    const omResp = await fetch(openMeteoUrl);
 
     // Handle non-OK responses gracefully
     let omJson = null;
@@ -46,14 +33,7 @@ export async function getAQI(req, res) {
     } else {
       const txt = await omResp.text().catch(() => '');
       console.warn('Open-Meteo non-OK:', omResp.status, txt);
-    }
-
-    let openAqJson = null;
-    if (openAqResp.ok) {
-      openAqJson = await openAqResp.json().catch(() => null);
-    } else {
-      const txt = await openAqResp.text().catch(() => '');
-      console.warn('OpenAQ non-OK:', openAqResp.status, txt);
+      return res.status(502).json({ error: 'Open-Meteo API fetch failed', status: omResp.status });
     }
 
     // Parse Open-Meteo into friendly structure
@@ -65,27 +45,13 @@ export async function getAQI(req, res) {
         elevation: omJson.elevation ?? null,
       };
 
-      const hourly = omJson.hourly || {};
-      const times = Array.isArray(hourly.time) ? hourly.time : [];
-      const pm10Arr = Array.isArray(hourly.pm10) ? hourly.pm10 : [];
-      const pm2_5Arr = Array.isArray(hourly.pm2_5) ? hourly.pm2_5 : [];
-      const usAqiArr = Array.isArray(hourly.us_aqi) ? hourly.us_aqi : [];
-      const coArr = Array.isArray(hourly.carbon_monoxide) ? hourly.carbon_monoxide : [];
-      const dustArr = Array.isArray(hourly.dust) ? hourly.dust : [];
-
       openMeteoData = {
         coordinates: coords,
-        hourly: {
-          time: times,
-          pm10: pm10Arr,
-          pm2_5: pm2_5Arr,
-          us_aqi: usAqiArr,
-          carbon_monoxide: coArr,
-          dust: dustArr,
-        },
+        current: null,
+        latestAQI: null
       };
 
-      // expose any `current` block from Open-Meteo if present
+      // Get current values from Open-Meteo
       if (omJson.current) {
         openMeteoData.current = {
           time: omJson.current.time ?? null,
@@ -93,37 +59,24 @@ export async function getAQI(req, res) {
           pm10: omJson.current.pm10 ?? null,
           pm2_5: omJson.current.pm2_5 ?? null,
           carbon_monoxide: omJson.current.carbon_monoxide ?? null,
+          nitrogen_dioxide: omJson.current.nitrogen_dioxide ?? null,
+          ozone: omJson.current.ozone ?? null,
           dust: omJson.current.dust ?? null,
+          uv_index: omJson.current.uv_index ?? null,
         };
-      }
 
-      // find most recent us_aqi: prefer current.us_aqi, fallback to latest hourly value
-      let latestAQI = null;
-      if (openMeteoData.current && openMeteoData.current.us_aqi !== null && openMeteoData.current.us_aqi !== undefined) {
-        latestAQI = openMeteoData.current.us_aqi;
-      } else {
-        for (let i = usAqiArr.length - 1; i >= 0; i--) {
-          const val = usAqiArr[i];
-          if (val !== null && val !== undefined) {
-            latestAQI = val;
-            break;
-          }
-        }
+        // Set latest AQI from current value
+        openMeteoData.latestAQI = omJson.current.us_aqi ?? null;
       }
-
-      openMeteoData.latestAQI = latestAQI;
     }
 
     const payload = {
       requestedCoordinates: { lat: latitude, lon: longitude },
       openMeteo: openMeteoData,
-      openAQ: openAqJson || null,
       sources: {
         openMeteo: !!omJson,
-        openAQ: !!openAqJson,
       },
-      note:
-        'openMeteo.latestAQI is the most recent us_aqi value from Open-Meteo (may be null). openAQ contains station measurements.',
+      note: 'Air quality data from Open-Meteo API. Current values include US AQI, PM10, PM2.5, CO, NO2, Ozone, Dust, and UV Index.',
     };
 
     return res.json(payload);

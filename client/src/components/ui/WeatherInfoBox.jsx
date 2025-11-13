@@ -4,6 +4,18 @@ export default function WeatherInfoBox({ coords, data }) {
   if (!coords) return null;
 
   const weather = data?.currentWeather;
+  const dewPoint = data?.currentDewPoint;
+  const daily = data?.dailyData;
+
+  const formatTime = (isoString) => {
+    if (!isoString) return 'N/A';
+    try {
+      const date = new Date(isoString);
+      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return 'N/A';
+    }
+  };
 
   return (
     <div className="weather-info-box" style={{ borderLeft: `4px solid var(--accent)` }}>
@@ -22,6 +34,13 @@ export default function WeatherInfoBox({ coords, data }) {
             <span className="label">💧 Humidity:</span>
             <span className="value">
               {weather.humidity !== null ? `${weather.humidity}%` : 'N/A'}
+            </span>
+          </div>
+
+          <div className="weather-item">
+            <span className="label">💎 Dew Point:</span>
+            <span className="value">
+              {dewPoint !== null ? `${dewPoint}°C` : 'N/A'}
             </span>
           </div>
 
@@ -45,6 +64,24 @@ export default function WeatherInfoBox({ coords, data }) {
               {weather.rain !== null ? `${weather.rain} mm` : '0 mm'}
             </span>
           </div>
+
+          {daily && (
+            <>
+              <div className="weather-item">
+                <span className="label">🌅 Sunrise:</span>
+                <span className="value">
+                  {formatTime(daily.sunrise)}
+                </span>
+              </div>
+
+              <div className="weather-item">
+                <span className="label">🌇 Sunset:</span>
+                <span className="value">
+                  {formatTime(daily.sunset)}
+                </span>
+              </div>
+            </>
+          )}
         </div>
       )}
 

@@ -11,7 +11,7 @@ export async function getClimate(req, res) {
     const latitude = Number(lat);
     const longitude = Number(lon);
 
-    // Open-Meteo Weather API - Current weather conditions
+    // Open-Meteo Weather API - Current weather conditions + hourly dew point + daily sunrise/sunset
     const params = new URLSearchParams({
       latitude: String(latitude),
       longitude: String(longitude),
@@ -22,7 +22,10 @@ export async function getClimate(req, res) {
         'wind_direction_10m',
         'rain'
       ].join(','),
-      timezone: 'auto'
+      hourly: 'dew_point_2m',
+      daily: 'sunrise,sunset',
+      timezone: 'auto',
+      forecast_days: 1
     });
 
     const climateUrl = `https://api.open-meteo.com/v1/forecast?${params.toString()}`;
@@ -47,13 +50,18 @@ export async function getClimate(req, res) {
         timezone: climateJson.timezone || 'UTC'
       },
       current: climateJson.current || {},
+      hourly: climateJson.hourly || {},
+      daily: climateJson.daily || {},
       current_units: climateJson.current_units || {},
+      hourly_units: climateJson.hourly_units || {},
+      daily_units: climateJson.daily_units || {},
       units: {
         temperature: '°C',
         humidity: '%',
         windspeed: 'km/h',
         wind_direction: '°',
-        rain: 'mm'
+        rain: 'mm',
+        dew_point: '°C'
       }
     };
 
@@ -70,11 +78,34 @@ export async function getClimate(req, res) {
       };
     }
 
+    // Get current hour's dew point
+    let currentDewPoint = null;
+    if (climateJson.hourly && climateJson.hourly.dew_point_2m && climateJson.hourly.time) {
+      const currentTime = new Date().toISOString().slice(0, 13) + ':00';
+      const timeIndex = climateJson.hourly.time.findIndex(t => t.startsWith(currentTime.slice(0, 13)));
+      if (timeIndex !== -1) {
+        currentDewPoint = climateJson.hourly.dew_point_2m[timeIndex] ?? null;
+      } else if (climateJson.hourly.dew_point_2m.length > 0) {
+        currentDewPoint = climateJson.hourly.dew_point_2m[0] ?? null;
+      }
+    }
+
+    // Extract daily sunrise/sunset
+    let dailyData = null;
+    if (climateJson.daily) {
+      dailyData = {
+        sunrise: climateJson.daily.sunrise?.[0] ?? null,
+        sunset: climateJson.daily.sunset?.[0] ?? null
+      };
+    }
+
     const payload = {
       requestedCoordinates: { lat: latitude, lon: longitude },
       climate: climateData,
       currentWeather: currentWeather,
-      note: 'Current weather data from Open-Meteo API'
+      currentDewPoint: currentDewPoint,
+      dailyData: dailyData,
+      note: 'Current weather data from Open-Meteo API with dew point and sunrise/sunset'
     };
 
     return res.json(payload);

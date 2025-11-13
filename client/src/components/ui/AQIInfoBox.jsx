@@ -17,16 +17,14 @@ export default function AQIInfoBox({ coords, data }) {
   const aqi = openM?.latestAQI;
   const boxColor = aqi ? getAQIColor(aqi) : "var(--accent)";
 
-  // prefer current values when available, otherwise fall back to latest hourly index
+  // Get current values from Open-Meteo
   const current = openM?.current ?? null;
-  const hourly = openM?.hourly ?? null;
-  const lastIndex = hourly?.time?.length ? hourly.time.length - 1 : -1;
 
   return (
     <div className="aqi-info-box" style={{ borderLeft: `4px solid ${boxColor}` }}>
       <h4>Air Quality Index</h4>
 
-      {(openM && (current || hourly)) && (
+      {(openM && current) && (
         <div className="aqi-params">
           <div className="aqi-item">
             <span className="label">🌍 AQI (US):</span>
@@ -38,34 +36,55 @@ export default function AQIInfoBox({ coords, data }) {
           <div className="aqi-item">
             <span className="label">💨 PM10:</span>
             <span className="value">
-              {current?.pm10 ?? (lastIndex >= 0 ? hourly.pm10[lastIndex] : null) ?? 'N/A'} µg/m³
+              {current.pm10 !== null ? `${current.pm10} µg/m³` : 'N/A'}
             </span>
           </div>
 
           <div className="aqi-item">
             <span className="label">🌬️ PM2.5:</span>
             <span className="value">
-              {current?.pm2_5 ?? (lastIndex >= 0 ? hourly.pm2_5[lastIndex] : null) ?? 'N/A'} µg/m³
+              {current.pm2_5 !== null ? `${current.pm2_5} µg/m³` : 'N/A'}
             </span>
           </div>
 
           <div className="aqi-item">
             <span className="label">☁️ CO:</span>
             <span className="value">
-              {current?.carbon_monoxide ?? (lastIndex >= 0 ? hourly.carbon_monoxide[lastIndex] : null) ?? 'N/A'} µg/m³
+              {current.carbon_monoxide !== null ? `${current.carbon_monoxide} µg/m³` : 'N/A'}
+            </span>
+          </div>
+
+          <div className="aqi-item">
+            <span className="label">💨 NO2:</span>
+            <span className="value">
+              {current.nitrogen_dioxide !== null ? `${current.nitrogen_dioxide} µg/m³` : 'N/A'}
+            </span>
+          </div>
+
+          <div className="aqi-item">
+            <span className="label">🌫️ Ozone:</span>
+            <span className="value">
+              {current.ozone !== null ? `${current.ozone} µg/m³` : 'N/A'}
             </span>
           </div>
 
           <div className="aqi-item">
             <span className="label">🏜️ Dust:</span>
             <span className="value">
-              {current?.dust ?? (lastIndex >= 0 ? hourly.dust[lastIndex] : null) ?? 'N/A'} µg/m³
+              {current.dust !== null ? `${current.dust} µg/m³` : 'N/A'}
+            </span>
+          </div>
+
+          <div className="aqi-item">
+            <span className="label">☀️ UV Index:</span>
+            <span className="value">
+              {current.uv_index !== null ? current.uv_index : 'N/A'}
             </span>
           </div>
         </div>
       )}
 
-      {!data?.openMeteo?.hourly && (
+      {!openM?.current && (
         <p style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
           No air quality data available
         </p>

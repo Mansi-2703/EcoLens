@@ -19,9 +19,23 @@ export default function MarineInfoBox({ coords, data }) {
           </div>
 
           <div className="marine-item">
+            <span className="label">🧭 Wave Direction:</span>
+            <span className="value">
+              {marine.waveDirection !== null ? `${marine.waveDirection}°` : 'N/A'}
+            </span>
+          </div>
+
+          <div className="marine-item">
             <span className="label">🌀 Swell Wave Height:</span>
             <span className="value">
               {marine.swellWaveHeight !== null ? `${marine.swellWaveHeight} m` : 'N/A'}
+            </span>
+          </div>
+
+          <div className="marine-item">
+            <span className="label">💨 Wind Wave Direction:</span>
+            <span className="value">
+              {marine.windWaveDirection !== null ? `${marine.windWaveDirection}°` : 'N/A'}
             </span>
           </div>
 
