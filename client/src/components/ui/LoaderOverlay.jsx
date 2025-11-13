@@ -4,7 +4,7 @@ export default function LoaderOverlay() {
   return (
     <div className="loader-overlay">
       <div className="spinner"></div>
-      <p>Fetching Air Quality Data...</p>
+      <p>Fetching Data...</p>
     </div>
   );
 }

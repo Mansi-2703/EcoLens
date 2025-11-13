@@ -62,7 +62,10 @@ export default function Header({ coordinates }) {
 
       {coordinates ? (
         <p className="coords">
-          📍 {locationName ? locationName : "Fetching location..."}
+          📍 {locationName ? locationName : "Fetching location..."} 
+          <span style={{ marginLeft: '10px', color: 'var(--muted)', fontSize: '0.9rem' }}>
+            (Lat: {coordinates.lat.toFixed(3)}, Lng: {coordinates.lon.toFixed(3)})
+          </span>
         </p>
       ) : (
         <p className="coords">Select a location on the globe</p>

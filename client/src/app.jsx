@@ -38,23 +38,25 @@ export default function App() {
         {/* Show header only on dashboard page */}
         {activePage === "dashboard" && <Header coordinates={coordinates} />}
 
-        {/* 🌍 Dashboard shows Global Air Quality Monitor */}
-        {activePage === "dashboard" && <GlobePage onPick={handleGlobePick} />}
+        <div className="page-content">
+          {/* 🌍 Dashboard shows Global Air Quality Monitor */}
+          {activePage === "dashboard" && <GlobePage onPick={handleGlobePick} />}
 
-        {/* Forest Cover / Analytics */}
-        {activePage === "analytics" && <ForestMap />}
+          {/* Forest Cover / Analytics */}
+          {activePage === "analytics" && <ForestMap />}
 
 
 
     
-        {/* Misc placeholders kept for compatibility */}
-        {activePage === "reports" && <div className="page">Reports Page</div>}
-        {activePage === "settings" && <div className="page">Settings Page</div>}
+          {/* Misc placeholders kept for compatibility */}
+          {activePage === "reports" && <div className="page">Reports Page</div>}
+          {activePage === "settings" && <div className="page">Settings Page</div>}
 
-        {/* Prediction pages */}
-        {activePage === "aqi" && <Aqi />}
-        {activePage === "marine" && <Marine />}
-        {activePage === "climate" && <Climate />}
+          {/* Prediction pages */}
+          {activePage === "aqi" && <Aqi />}
+          {activePage === "marine" && <Marine />}
+          {activePage === "climate" && <Climate />}
+        </div>
       </main>
     </div>
   );

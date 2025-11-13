@@ -8,10 +8,6 @@ export default function MarineInfoBox({ coords, data }) {
   return (
     <div className="marine-info-box">
       <h4>Marine Conditions</h4>
-      <div className="coords">
-        <p>Lat: {coords.lat.toFixed(3)}</p>
-        <p>Lng: {coords.lng.toFixed(3)}</p>
-      </div>
 
       {marine && (
         <div className="marine-params">

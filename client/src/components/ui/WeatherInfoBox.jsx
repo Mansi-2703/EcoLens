@@ -8,10 +8,6 @@ export default function WeatherInfoBox({ coords, data }) {
   return (
     <div className="weather-info-box" style={{ borderLeft: `4px solid var(--accent)` }}>
       <h4>Weather Conditions</h4>
-      <div className="coords">
-        <p>Lat: {coords.lat.toFixed(3)}</p>
-        <p>Lng: {coords.lng.toFixed(3)}</p>
-      </div>
 
       {weather && (
         <div className="weather-params">

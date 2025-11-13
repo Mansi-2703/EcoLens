@@ -18,52 +18,44 @@ export default function AQIInfoBox({ coords, data }) {
 
   return (
     <div className="aqi-info-box" style={{ borderLeft: `4px solid ${boxColor}` }}>
-      <h4>Selected Location</h4>
-      <div className="coords">
-        <p>Lat: {coords.lat.toFixed(3)}</p>
-        <p>Lng: {coords.lng.toFixed(3)}</p>
-      </div>
-
-      {aqi && (
-        <div className="aqi-value">
-          <span className="label">AQI (US):</span>
-          <span className="value" style={{ color: boxColor, fontWeight: "bold" }}>
-            {aqi}
-          </span>
-        </div>
-      )}
+      <h4>Air Quality Index</h4>
 
       {data?.openMeteo?.hourly && (
-        <div className="params">
-          <h5>Latest Parameters (Open-Meteo)</h5>
+        <div className="aqi-params">
+          <div className="aqi-item">
+            <span className="label">🌫️ AQI (US):</span>
+            <span className="value" style={{ color: boxColor }}>
+              {aqi || 'N/A'}
+            </span>
+          </div>
+
           {(() => {
             const h = data.openMeteo.hourly;
             const i = h.time.length - 1;
             return (
               <>
-                {h.pm10[i] && <p>PM10: {h.pm10[i]} µg/m³</p>}
-                {h.pm2_5[i] && <p>PM2.5: {h.pm2_5[i]} µg/m³</p>}
+                <div className="aqi-item">
+                  <span className="label">💨 PM10:</span>
+                  <span className="value">
+                    {h.pm10[i] ? `${h.pm10[i]} µg/m³` : 'N/A'}
+                  </span>
+                </div>
+                <div className="aqi-item">
+                  <span className="label">🌬️ PM2.5:</span>
+                  <span className="value">
+                    {h.pm2_5[i] ? `${h.pm2_5[i]} µg/m³` : 'N/A'}
+                  </span>
+                </div>
               </>
             );
           })()}
         </div>
       )}
 
-      {data?.openAQ?.results?.length > 0 && (
-        <div className="stations">
-          <h5>Nearby Stations (OpenAQ)</h5>
-          {data.openAQ.results.slice(0, 2).map((station, i) => (
-            <div key={i} className="station">
-              <strong>{station.location}</strong>
-              {station.measurements &&
-                station.measurements.slice(0, 3).map((m, j) => (
-                  <div key={j}>
-                    {m.parameter.toUpperCase()}: {m.value} {m.unit}
-                  </div>
-                ))}
-            </div>
-          ))}
-        </div>
+      {!data?.openMeteo?.hourly && (
+        <p style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
+          No air quality data available
+        </p>
       )}
     </div>
   );

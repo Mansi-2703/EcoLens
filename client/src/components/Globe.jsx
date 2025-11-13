@@ -121,13 +121,13 @@ const GlobeComponent = ({ onPick }) => {
 
         {/* 🆕 Reusable UI Components */}
         {loading && <LoaderOverlay />}
-        {selectedCoords && <AQIInfoBox coords={selectedCoords} data={aqiData} />}
       </div>
       
-      {/* Weather and Marine cards below the globe */}
+      {/* Weather, Marine, and AQI cards below the globe */}
       <div style={{ display: 'flex', gap: '20px', marginTop: '20px' }}>
         {selectedCoords && <WeatherInfoBox coords={selectedCoords} data={weatherData} />}
         {selectedCoords && <MarineInfoBox coords={selectedCoords} data={marineData} />}
+        {selectedCoords && <AQIInfoBox coords={selectedCoords} data={aqiData} />}
       </div>
     </div>
   );
