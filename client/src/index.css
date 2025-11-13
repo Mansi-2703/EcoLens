@@ -100,25 +100,41 @@ body,
   width: 100%;
   padding: 12px 15px;
   text-align: left;
-  background: transparent;
-  border: 2px solid transparent;
-  border-image: linear-gradient(45deg, var(--accent), #00c6ff, var(--accent)) 1;
-  border-radius: 20px;
+  background: rgba(26, 216, 205, 0.05);
+  border: 1px solid rgba(26, 216, 205, 0.2);
   color: #e6f0f0;
   font-size: 1rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   white-space: nowrap;
   overflow: hidden;
   position: relative;
+  border-radius: 12px;
 }
 
-
+.navbutton::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 0 4px 4px 0;
+}
 
 .navbutton:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(26, 216, 205, 0.15);
+  border-color: var(--accent);
   color: var(--accent);
   transform: translateX(5px);
+  box-shadow: 0 0 15px rgba(26, 216, 205, 0.3);
+}
+
+.navbutton:hover::before {
+  opacity: 1;
 }
 
 
@@ -129,6 +145,9 @@ body,
   padding: 12px;
   text-align: center;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .sidebar.collapsed .navbutton::before {
@@ -136,42 +155,12 @@ body,
   font-size: 1.6rem;
   color: var(--accent);
   display: inline-block;
-}
-
-/* Tooltip on hover - shows page name */
-.sidebar.collapsed .navbutton:hover::after {
-  content: attr(title);
-  position: absolute;
-  left: 75px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: linear-gradient(135deg, rgba(34, 56, 106, 0.95) 0%, rgba(27, 87, 100, 0.95) 100%);
-  color: #e6f0f0;
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  white-space: nowrap;
-  border: 1px solid rgba(26, 200, 186, 0.3);
-  box-shadow:
-    0 8px 25px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(26, 200, 186, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  z-index: 1000;
-  pointer-events: none;
-  animation: tooltipFadeIn 0.2s ease-out;
-  backdrop-filter: blur(8px);
-}
-
-@keyframes tooltipFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-50%) translateX(-5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(-50%) translateX(0);
-  }
+  opacity: 1;
+  position: static;
+  width: auto;
+  height: auto;
+  background: none;
+  border-radius: 0;
 }
 
 /* Toggle button */
