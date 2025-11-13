@@ -101,21 +101,27 @@ body,
   padding: 12px 15px;
   text-align: left;
   background: transparent;
-  border: none;
-  border-radius: 8px;
+  border: 2px solid transparent;
+  border-image: linear-gradient(45deg, var(--accent), #00c6ff, var(--accent)) 1;
+  border-radius: 20px;
   color: #e6f0f0;
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
   overflow: hidden;
+  position: relative;
 }
+
+
 
 .navbutton:hover {
   background: rgba(255, 255, 255, 0.05);
   color: var(--accent);
   transform: translateX(5px);
 }
+
+
 
 /* Collapsed state — hides text, keeps small bullet/icon */
 .sidebar.collapsed .navbutton {
@@ -139,16 +145,33 @@ body,
   left: 75px;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(10, 15, 25, 0.98);
+  background: linear-gradient(135deg, rgba(34, 56, 106, 0.95) 0%, rgba(27, 87, 100, 0.95) 100%);
   color: #e6f0f0;
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
   font-size: 0.85rem;
+  font-weight: 500;
   white-space: nowrap;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(26, 200, 186, 0.3);
+  box-shadow:
+    0 8px 25px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(26, 200, 186, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
   z-index: 1000;
   pointer-events: none;
+  animation: tooltipFadeIn 0.2s ease-out;
+  backdrop-filter: blur(8px);
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
 }
 
 /* Toggle button */
@@ -188,23 +211,7 @@ body,
   padding-top: 10px;
 }
 
-.navbutton {
-  background: transparent;
-  color: #e6f0f0;
-  border: none;
-  text-align: left;
-  font-size: 1rem;
-  padding: 10px 12px;
-  margin: 6px 0;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-}
 
-.navbutton:hover {
-  background: rgba(255, 255, 255, 0.05);
-  transform: translateX(5px);
-}
 
 /* ----------- Header ----------- */
 .header {
