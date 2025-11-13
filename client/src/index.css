@@ -62,8 +62,37 @@ body,
 .nav-section {
   display: flex;
   flex-direction: column;       /* Force vertical stacking */
-  gap: 10px;                    /* Space between buttons */
+  gap: 20px;                    /* Space between groups */
   width: 100%;
+}
+
+/* Navigation group styling */
+.nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+/* Group title styling */
+.group-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0 0 8px 0;
+  padding-left: 5px;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+/* Hide group titles when collapsed */
+.sidebar.collapsed .group-title {
+  opacity: 0;
+  height: 0;
+  margin: 0;
+  overflow: hidden;
 }
 
 /* Button styling */
@@ -78,6 +107,8 @@ body,
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .navbutton:hover {
@@ -90,12 +121,34 @@ body,
 .sidebar.collapsed .navbutton {
   font-size: 0;
   padding: 12px;
+  text-align: center;
+  position: relative;
 }
 
 .sidebar.collapsed .navbutton::before {
   content: "•";
-  font-size: 1.2rem;
+  font-size: 1.6rem;
   color: var(--accent);
+  display: inline-block;
+}
+
+/* Tooltip on hover - shows page name */
+.sidebar.collapsed .navbutton:hover::after {
+  content: attr(title);
+  position: absolute;
+  left: 75px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(10, 15, 25, 0.98);
+  color: #e6f0f0;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  pointer-events: none;
 }
 
 /* Toggle button */
@@ -104,11 +157,11 @@ body,
   border: none;
   color: var(--accent);
   cursor: pointer;
+  transition: transform 0.3s ease;
 }
 
 .toggle-btn:hover {
   transform: rotate(90deg);
-  transition: transform 0.3s ease;
 }
 
 /* ----------- App Layout ----------- */
@@ -118,13 +171,18 @@ body,
   overflow: hidden;
 }
 
-
-
 .logo {
   font-weight: 700;
   color: var(--accent);
   font-size: 1.3rem;
-  margin-bottom: 1.5rem;
+  text-align: left;
+  transition: font-size 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar.collapsed .logo {
+  font-size: 1.1rem;
   text-align: center;
 }
 
@@ -613,6 +671,17 @@ body,
 .page-content {
   padding: 20px 30px;
   flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 100%;
+}
+
+.page-content > * {
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 /* coords */
@@ -846,4 +915,263 @@ body,
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.3px;
+}
+
+/* ==================== RESPONSIVE DESIGN ==================== */
+
+/* Tablet and below (max-width: 1200px) */
+@media (max-width: 1200px) {
+  /* Globe and cards layout */
+  .globe-container {
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+  
+  /* Adjust cards container */
+  div[style*="gap: 70px"] {
+    gap: 20px !important;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  /* Cards responsive sizing */
+  .aqi-info-box,
+  .weather-info-box,
+  .marine-info-box,
+  .aqi-guide-box {
+    width: 260px !important;
+    min-width: 260px !important;
+  }
+  
+  /* Header text size */
+  .header .gradient-text {
+    font-size: 2rem;
+  }
+  
+  /* Search bar */
+  .search-bar-container {
+    width: 100% !important;
+    max-width: 500px;
+  }
+}
+
+/* Tablet (max-width: 1024px) */
+@media (max-width: 1024px) {
+  /* Sticky logo */
+  .sticky-logo {
+    top: 5px;
+    right: 15px;
+  }
+  
+  .sticky-logo img {
+    width: 50px;
+    height: 50px;
+  }
+  
+  /* Globe sizing */
+  div[style*="width: 1000px"] {
+    width: 100% !important;
+    max-width: 800px;
+  }
+  
+  /* Header */
+  .header {
+    padding-top: 40px;
+  }
+  
+  .header .gradient-text {
+    font-size: 1.8rem;
+  }
+  
+  .header .coords {
+    font-size: 0.85rem;
+  }
+}
+
+/* Mobile landscape and small tablets (max-width: 768px) */
+@media (max-width: 768px) {
+  /* Sidebar adjustments */
+  .sidebar {
+    width: 200px;
+  }
+  
+  .sidebar.collapsed {
+    width: 60px;
+  }
+  
+  /* Content padding */
+  .content {
+    padding: 12px;
+  }
+  
+  /* Header */
+  .header .gradient-text {
+    font-size: 1.5rem;
+  }
+  
+  .header .coords {
+    font-size: 0.8rem;
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  /* Globe container */
+  div[style*="width: 1000px"] {
+    width: 100% !important;
+    max-width: 600px;
+    height: 400px !important;
+  }
+  
+  /* Cards */
+  .aqi-info-box,
+  .weather-info-box,
+  .marine-info-box,
+  .aqi-guide-box {
+    width: 240px !important;
+    min-width: 240px !important;
+  }
+  
+  /* Search bar */
+  div[style*="width: 280px"] {
+    width: 100% !important;
+    max-width: 280px;
+  }
+  
+  /* Sticky logo */
+  .sticky-logo {
+    top: 5px;
+    right: 10px;
+  }
+  
+  .sticky-logo img {
+    width: 40px;
+    height: 40px;
+  }
+  
+  /* Cards container */
+  div[style*="gap: 70px"] {
+    gap: 15px !important;
+  }
+}
+
+/* Mobile portrait (max-width: 480px) */
+@media (max-width: 480px) {
+  /* Sidebar - force collapsed on mobile */
+  .sidebar {
+    width: 60px;
+  }
+  
+  /* Header */
+  .header {
+    padding-top: 30px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  
+  .header .gradient-text {
+    font-size: 1.2rem;
+  }
+  
+  .header .coords {
+    font-size: 0.75rem;
+  }
+  
+  /* Globe container */
+  div[style*="width: 1000px"],
+  div[style*="width: 100%"] {
+    width: 100% !important;
+    height: 300px !important;
+  }
+  
+  /* Cards - stack vertically and full width */
+  div[style*="display: flex"][style*="gap"] {
+    flex-direction: column !important;
+    align-items: center !important;
+    width: 100% !important;
+  }
+  
+  .aqi-info-box,
+  .weather-info-box,
+  .marine-info-box,
+  .aqi-guide-box {
+    width: 95% !important;
+    min-width: unset !important;
+    max-width: 350px !important;
+  }
+  
+  /* Search bar */
+  .search-bar-form {
+    padding: 10px;
+  }
+  
+  .search-dropdown,
+  .search-input,
+  .search-button {
+    font-size: 0.8rem;
+  }
+  
+  /* Sticky logo */
+  .sticky-logo {
+    display: none; /* Hide on very small screens */
+  }
+  
+  /* Navigation buttons text */
+  .navbutton {
+    font-size: 0.9rem;
+    padding: 10px 12px;
+  }
+  
+  /* Content */
+  .content {
+    padding: 8px;
+  }
+  
+  /* Search info box */
+  .search-info-list {
+    font-size: 0.7rem;
+  }
+  
+  .search-info-title {
+    font-size: 0.8rem;
+  }
+}
+
+/* Extra small devices (max-width: 360px) */
+@media (max-width: 360px) {
+  .header .gradient-text {
+    font-size: 1rem;
+  }
+  
+  .header .coords {
+    font-size: 0.7rem;
+  }
+  
+  /* Globe */
+  div[style*="height: 500px"],
+  div[style*="height: 400px"],
+  div[style*="height: 300px"] {
+    height: 250px !important;
+  }
+  
+  /* Cards even smaller */
+  .aqi-info-box,
+  .weather-info-box,
+  .marine-info-box,
+  .aqi-guide-box {
+    width: 100% !important;
+    padding: 12px 14px;
+  }
+  
+  /* Sidebar force hidden, show only toggle */
+  .sidebar:not(.collapsed) {
+    width: 60px;
+  }
+  
+  .sidebar:not(.collapsed) .navbutton {
+    font-size: 0;
+  }
+  
+  .sidebar:not(.collapsed) .logo {
+    font-size: 1rem;
+  }
 }

@@ -17,23 +17,23 @@ export default function Sidebar({ isOpen = true, onToggle = () => {}, onNavigate
       <nav className="nav-section">
         <div className="nav-group">
           <h4 className="group-title">Realtime Analysis</h4>
-          <button className="navbutton" onClick={() => onNavigate('dashboard')}>
+          <button className="navbutton" title="Realtime Monitor" onClick={() => onNavigate('dashboard')}>
             Realtime Monitor
           </button>
-          <button className="navbutton" onClick={() => onNavigate('analytics')}>
+          <button className="navbutton" title="Forest Cover" onClick={() => onNavigate('analytics')}>
             Forest Cover
           </button>
         </div>
 
         <div className="nav-group">
           <h4 className="group-title">Predictions</h4>
-          <button className="navbutton" onClick={() => onNavigate('aqi')}>
+          <button className="navbutton" title="AQI" onClick={() => onNavigate('aqi')}>
             aqi
           </button>
-          <button className="navbutton" onClick={() => onNavigate('marine')}>
+          <button className="navbutton" title="Marine" onClick={() => onNavigate('marine')}>
             marine
           </button>
-          <button className="navbutton" onClick={() => onNavigate('climate')}>
+          <button className="navbutton" title="Climate" onClick={() => onNavigate('climate')}>
             climate
           </button>
         </div>

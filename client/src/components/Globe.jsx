@@ -141,8 +141,8 @@ const GlobeComponent = ({ onPick }) => {
     : [];
 
    return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%' }}>
-      <div style={{ display: 'flex', gap: '20px', width: '100%', alignItems: 'flex-start' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', gap: '20px', width: '100%', alignItems: 'flex-start', justifyContent: 'center' }}>
         {/* Globe Container */}
         <div style={{ position: 'relative', width: '1000px', height: '500px', flexShrink: 0 }}>
           <Globe
@@ -181,7 +181,7 @@ const GlobeComponent = ({ onPick }) => {
       </div>
       
       {/* AQI Guide, AQI, Weather, and Marine cards below the globe */}
-      <div style={{ display: 'flex', gap: '70px', marginTop: '20px' }}>
+      <div style={{ display: 'flex', gap: '70px', marginTop: '20px', justifyContent: 'center', flexWrap: 'wrap', width: '100%' }}>
         <AQIGuideBox />
         {selectedCoords && <AQIInfoBox coords={selectedCoords} data={aqiData} />}
         {selectedCoords && <WeatherInfoBox coords={selectedCoords} data={weatherData} />}
