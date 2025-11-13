@@ -720,59 +720,6 @@ body,
   filter: brightness(1.2);
 }
 
-/* ----------- Climate Page Styles ----------- */
-.climate-page {
-  padding: 20px;
-}
-
-.climate-page .loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-}
-
-.climate-page h3 {
-  color: var(--accent);
-  margin-bottom: 15px;
-}
-
-.climate-page h4 {
-  color: var(--accent);
-  font-size: 1rem;
-  margin-top: 10px;
-}
-
-.climate-page table {
-  font-size: 0.9rem;
-}
-
-.climate-page table th {
-  color: var(--accent);
-  font-weight: 600;
-}
-
-.climate-page input {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #e6f0f0;
-  border-radius: 6px;
-}
-
-.climate-page button {
-  background: var(--accent);
-  color: var(--bg);
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.climate-page button:hover {
-  background: #16c4ba;
-  transform: translateY(-2px);
-}
 
 /* ----------- Search Bar ----------- */
 .search-bar-container {
