@@ -1,59 +1,87 @@
 import React, { useEffect, useState } from "react";
-import citiesData from "../../data/world-cities.json";
 
 export default function Header({ coordinates }) {
   const [locationName, setLocationName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  // 🔄 Fetch location name whenever coordinates change
+  // 🔄 Fetch precise location name using reverse geocoding
   useEffect(() => {
     if (!coordinates) return;
-    const { lat, lon } = coordinates;
-
-    // Offline nearest-city lookup using local `world-cities.json`
-    const toRad = (deg) => (deg * Math.PI) / 180;
-    const haversineKm = (lat1, lon1, lat2, lon2) => {
-      const R = 6371; // km
-      const dLat = toRad(lat2 - lat1);
-      const dLon = toRad(lon2 - lon1);
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-          Math.sin(dLon / 2) * Math.sin(dLon / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c;
-    };
-
-    const findNearestCity = (latVal, lonVal, maxKm = 250) => {
-      let best = null;
-      let bestDist = Infinity;
-
-      for (let i = 0; i < citiesData.length; i++) {
-        const c = citiesData[i];
-        if (!c.lat || !c.lng) continue;
-        const clat = parseFloat(c.lat);
-        const clng = parseFloat(c.lng || c.lon || c.lng);
-        if (Number.isNaN(clat) || Number.isNaN(clng)) continue;
-
-        const d = haversineKm(latVal, lonVal, clat, clng);
-        if (d < bestDist) {
-          bestDist = d;
-          best = c;
+    
+    const fetchPreciseLocation = async () => {
+      const { lat, lon } = coordinates;
+      setIsLoading(true);
+      
+      try {
+        // Use Nominatim reverse geocoding API for precise location
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=18&addressdetails=1`
+        );
+        
+        if (!response.ok) {
+          throw new Error('Geocoding failed');
         }
+        
+        const data = await response.json();
+        
+        // Build precise location string from address components
+        let locationParts = [];
+        
+        // Add specific location details (most precise first)
+        if (data.address) {
+          const addr = data.address;
+          
+          // Add specific place name (building, attraction, etc.)
+          if (addr.tourism) locationParts.push(addr.tourism);
+          else if (addr.amenity) locationParts.push(addr.amenity);
+          else if (addr.building) locationParts.push(addr.building);
+          else if (addr.shop) locationParts.push(addr.shop);
+          else if (addr.office) locationParts.push(addr.office);
+          
+          // Add road/street
+          if (addr.road) locationParts.push(addr.road);
+          else if (addr.pedestrian) locationParts.push(addr.pedestrian);
+          
+          // Add neighborhood/suburb
+          if (addr.neighbourhood) locationParts.push(addr.neighbourhood);
+          else if (addr.suburb) locationParts.push(addr.suburb);
+          else if (addr.quarter) locationParts.push(addr.quarter);
+          
+          // Add city/town
+          if (addr.city) locationParts.push(addr.city);
+          else if (addr.town) locationParts.push(addr.town);
+          else if (addr.village) locationParts.push(addr.village);
+          else if (addr.municipality) locationParts.push(addr.municipality);
+          
+          // Add state/region if available
+          if (addr.state) locationParts.push(addr.state);
+          
+          // Add country
+          if (addr.country) locationParts.push(addr.country);
+        }
+        
+        // If we have location parts, join them
+        if (locationParts.length > 0) {
+          // Limit to first 4 parts for readability
+          setLocationName(locationParts.slice(0, 4).join(', '));
+        } else if (data.display_name) {
+          // Fallback to display name but limit length
+          const parts = data.display_name.split(',').slice(0, 3);
+          setLocationName(parts.join(','));
+        } else {
+          setLocationName(`Lat ${lat.toFixed(3)}, Lon ${lon.toFixed(3)}`);
+        }
+        
+      } catch (error) {
+        console.error('Reverse geocoding error:', error);
+        // Fallback to coordinates
+        setLocationName(`Lat ${lat.toFixed(3)}, Lon ${lon.toFixed(3)}`);
+      } finally {
+        setIsLoading(false);
       }
-
-      if (best && bestDist <= maxKm) {
-        return { city: best.city || best.name || "", country: best.country || "", distanceKm: Math.round(bestDist) };
-      }
-      return null;
     };
-
-    const nearest = findNearestCity(lat, lon, 250);
-    if (nearest) {
-      setLocationName(`${nearest.city}, ${nearest.country}`);
-    } else {
-      // Fallback: show rounded coordinates if no nearby city found
-      setLocationName(`Lat ${lat.toFixed(2)}, Lon ${lon.toFixed(2)}`);
-    }
+    
+    fetchPreciseLocation();
   }, [coordinates]);
 
   return (
@@ -62,7 +90,7 @@ export default function Header({ coordinates }) {
 
       {coordinates ? (
         <p className="coords">
-          📍 {locationName ? locationName : "Fetching location..."} 
+          📍 {isLoading ? "Fetching location..." : (locationName || "Unknown location")}
           <span style={{ marginLeft: '10px', color: 'var(--muted)', fontSize: '0.9rem' }}>
             (Lat: {coordinates.lat.toFixed(3)}, Lng: {coordinates.lon.toFixed(3)})
           </span>

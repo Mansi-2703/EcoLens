@@ -29,7 +29,7 @@ export default function AQIInfoBox({ coords, data }) {
       {(openM && (current || hourly)) && (
         <div className="aqi-params">
           <div className="aqi-item">
-            <span className="label">🌫️ AQI (US):</span>
+            <span className="label">🌍 AQI (US):</span>
             <span className="value" style={{ color: boxColor }}>
               {aqi ?? 'N/A'}
             </span>

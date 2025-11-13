@@ -230,6 +230,9 @@ body,
   width: 280px;
   min-width: 280px;
   border-left: 4px solid var(--accent);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
   font-size: 0.9rem;
   overflow-y: auto;
@@ -237,6 +240,14 @@ body,
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
   animation: fadeIn 0.4s ease;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
+}
+
+.aqi-info-box:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
+  filter: brightness(1.1);
 }
 
 .aqi-info-box h4,
@@ -298,10 +309,21 @@ body,
   width: 280px;
   min-width: 280px;
   border-left: 4px solid #22c55e;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
   font-size: 0.9rem;
   overflow-y: auto;
   animation: fadeIn 0.4s ease;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
+}
+
+.weather-info-box:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
+  filter: brightness(1.1);
 }
 
 .weather-info-box h4 {
@@ -355,7 +377,6 @@ body,
 
 /* ----------- Marine Info Box ----------- */
 .marine-info-box {
-  height: 290px;
   position: static;
   background: rgba(10, 15, 25, 0.9);
   color: #e6f0f0;
@@ -364,11 +385,22 @@ body,
   width: 280px;
   min-width: 280px;
   border-left: 4px solid #3b82f6;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
   font-size: 0.9rem;
   overflow-y: auto;
   animation: fadeIn 0.4s ease;
-   margin-top: 20px; 
+  margin-top: 20px;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
+}
+
+.marine-info-box:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
+  filter: brightness(1.1);
 }
 
 .marine-info-box h4 {
@@ -413,6 +445,74 @@ body,
 .marine-item .value {
   font-weight: bold;
   color: #3b82f6;
+}
+
+/* ----------- AQI Guide Box ----------- */
+.aqi-guide-box {
+  position: static;
+  margin-top: 20px;
+  background: rgba(10, 15, 25, 0.9);
+  color: #e6f0f0;
+  padding: 16px 18px;
+  border-radius: 12px;
+  width: 280px;
+  min-width: 280px;
+  border-left: 4px solid var(--accent);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  font-size: 0.9rem;
+  animation: fadeIn 0.4s ease;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
+}
+
+.aqi-guide-box:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
+  filter: brightness(1.1);
+}
+
+.aqi-guide-box h4 {
+  margin: 0 0 12px 0;
+  color: var(--accent);
+}
+
+.aqi-guide-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.aqi-guide-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.02);
+  border-left-width: 4px;
+  border-left-style: solid;
+}
+
+.aqi-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.aqi-range {
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: #e6f0f0;
+  min-width: 50px;
+  flex-shrink: 0;
+}
+
+.aqi-level {
+  font-size: 0.85rem;
+  color: var(--muted);
+  flex: 1;
 }
 
 @keyframes fadeIn {
@@ -594,4 +694,156 @@ body,
 .climate-page button:hover {
   background: #16c4ba;
   transform: translateY(-2px);
+}
+
+/* ----------- Search Bar ----------- */
+.search-bar-container {
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.search-bar-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(10, 15, 25, 0.9);
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.search-type-dropdown {
+  width: 100%;
+}
+
+.search-dropdown {
+  width: 100%;
+  padding: 8px 10px;
+  background: rgba(20, 30, 45, 0.9);
+  color: #e6f0f0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.search-dropdown:hover {
+  border-color: var(--accent);
+}
+
+.search-dropdown:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(20, 200, 186, 0.2);
+}
+
+.search-inputs-latlong {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.search-inputs-location {
+  width: 100%;
+}
+
+.search-input {
+  padding: 8px 10px;
+  background: rgba(20, 30, 45, 0.9);
+  color: #e6f0f0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  flex: 1;
+  width: 100%;
+}
+
+.search-input-wide {
+  width: 100%;
+}
+
+.search-input::placeholder {
+  color: rgba(230, 240, 240, 0.5);
+  font-size: 0.8rem;
+}
+
+.search-input:hover {
+  border-color: var(--accent);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(20, 200, 186, 0.2);
+}
+
+.search-button {
+  padding: 8px 16px;
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.search-button:hover {
+  background: #16c4ba;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(20, 200, 186, 0.3);
+}
+
+.search-button:active {
+  transform: translateY(0);
+}
+
+/* ----------- Search Info Box ----------- */
+.search-info-box {
+  margin-top: 60px;
+  padding: 10px 12px;
+  background: rgba(10, 15, 25, 0.95);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 3px solid var(--accent);
+}
+
+.search-info-title {
+  margin: 0 0 8px 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.5px;
+}
+
+.search-info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: rgba(230, 240, 240, 0.8);
+}
+
+.search-info-list li {
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.search-info-list li:last-child {
+  border-bottom: none;
+}
+
+.search-info-list strong {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
