@@ -13,8 +13,14 @@ function getAQIColor(aqi) {
 export default function AQIInfoBox({ coords, data }) {
   if (!coords) return null;
 
-  const aqi = data?.openMeteo?.latestAQI;
+  const openM = data?.openMeteo;
+  const aqi = openM?.latestAQI;
   const boxColor = aqi ? getAQIColor(aqi) : "var(--accent)";
+
+  // prefer current values when available, otherwise fall back to latest hourly index
+  const current = openM?.current ?? null;
+  const hourly = openM?.hourly ?? null;
+  const lastIndex = hourly?.time?.length ? hourly.time.length - 1 : -1;
 
   return (
     <div className="aqi-info-box" style={{ borderLeft: `4px solid ${boxColor}` }}>
@@ -30,22 +36,31 @@ export default function AQIInfoBox({ coords, data }) {
           <span className="value" style={{ color: boxColor, fontWeight: "bold" }}>
             {aqi}
           </span>
+          
         </div>
       )}
 
-      {data?.openMeteo?.hourly && (
+      {(openM && (current || hourly)) && (
         <div className="params">
           <h5>Latest Parameters (Open-Meteo)</h5>
-          {(() => {
-            const h = data.openMeteo.hourly;
-            const i = h.time.length - 1;
-            return (
-              <>
-                {h.pm10[i] && <p>PM10: {h.pm10[i]} µg/m³</p>}
-                {h.pm2_5[i] && <p>PM2.5: {h.pm2_5[i]} µg/m³</p>}
-              </>
-            );
-          })()}
+          <div className="aqi-params">
+            <div>
+              <span className="label">PM10:</span>
+              <span className="value">{current?.pm10 ?? (lastIndex >= 0 ? hourly.pm10[lastIndex] : null) ?? 'N/A'} µg/m³</span>
+            </div>
+            <div>
+              <span className="label">PM2.5:</span>
+              <span className="value">{current?.pm2_5 ?? (lastIndex >= 0 ? hourly.pm2_5[lastIndex] : null) ?? 'N/A'} µg/m³</span>
+            </div>
+            <div>
+              <span className="label">CO:</span>
+              <span className="value">{current?.carbon_monoxide ?? (lastIndex >= 0 ? hourly.carbon_monoxide[lastIndex] : null) ?? 'N/A'} µg/m³</span>
+            </div>
+            <div>
+              <span className="label">Dust:</span>
+              <span className="value">{current?.dust ?? (lastIndex >= 0 ? hourly.dust[lastIndex] : null) ?? 'N/A'} µg/m³</span>
+            </div>
+          </div>
         </div>
       )}
 
