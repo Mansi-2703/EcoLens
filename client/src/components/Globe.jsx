@@ -10,6 +10,7 @@ import WeatherInfoBox from './ui/WeatherInfoBox';
 import MarineInfoBox from './ui/MarineInfoBox';
 import AQIGuideBox from './ui/AQIGuideBox';
 import SearchBar from './ui/SearchBar';
+import AISuggestionBox from './ui/AISuggestionBox';
 
 
 const GlobeComponent = ({ onPick }) => {
@@ -187,6 +188,15 @@ const GlobeComponent = ({ onPick }) => {
         {selectedCoords && <WeatherInfoBox coords={selectedCoords} data={weatherData} />}
         {selectedCoords && <MarineInfoBox coords={selectedCoords} data={marineData} />}
       </div>
+
+      {/* AI Suggestion Box - AI-powered environmental analysis */}
+      {selectedCoords && (
+        <AISuggestionBox 
+          aqiData={aqiData}
+          weatherData={weatherData}
+          marineData={marineData}
+        />
+      )}
     </div>
   );
 };
