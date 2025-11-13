@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MapLibreMap from './MapLibreMap';
 import SearchBar from './SearchBar';
 import ForecastPanel from './ForecastPanel';
@@ -10,6 +10,29 @@ export default function Climate() {
   const [currentHour, setCurrentHour] = useState(0);
   const [heatmapVisible, setHeatmapVisible] = useState(false);
   const [mapInstance, setMapInstance] = useState(null);
+
+  // Fetch user's device location on component mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setSelectedLocation({ lat: latitude, lng: longitude });
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          // Optionally set a default location or show an error message
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000 // 5 minutes
+        }
+      );
+    } else {
+      console.error('Geolocation is not supported by this browser.');
+    }
+  }, []);
 
   const handleLocationSelect = (location) => {
     setSelectedLocation(location);
@@ -25,18 +48,27 @@ export default function Climate() {
 
   return (
     <div className="page predictions-page climate-page" style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Header with search and controls */}
+      {/* Header */}
+      <header className="header" style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px 40px',
+        height: '95px'
+      }}>
+        <h2 className="gradient-text" style={{ fontSize: '2.5rem', margin: 0 }}>Climate Predictions</h2>
+      </header>
+
+      {/* Controls */}
       <div style={{
         padding: '20px',
         background: 'rgba(0, 0, 0, 0)',
-        borderBottom: '1px solid #ddd',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         flexWrap: 'wrap',
         gap: '10px'
       }}>
-        <h2 style={{ margin: 0 }}>Climate Predictions</h2>
         <SearchBar onSearch={handleSearch} />
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <label>

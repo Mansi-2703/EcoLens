@@ -1,10 +1,12 @@
-# TODO: Increase Search Granularity in SearchBar
+# TODO: Implement Geolocation and Location Display for Climate Page
 
-## Steps to Complete
-- [x] Update SearchBar.jsx to use Nominatim API for geocoding instead of Open-Meteo
-- [x] Adjust response parsing to handle Nominatim's JSON structure (lat, lon, display_name)
-- [x] Enhance suggestion display to show full address details for clarity
-- [x] Add error handling for API failures and validate coordinates before passing to onSearch
-- [x] Test the updated search with the query "Kurar, Mumbai, Maharashtra, India" to verify it fetches coordinates and points on the map (tested via local dev server)
-- [x] Ensure no breaking changes to existing functionality (e.g., lat/lng input still works)
-- [ ] If needed, add debouncing to API calls to prevent excessive requests
+## Tasks
+- [x] Modify `client/src/components/predictions/Climate.jsx` to fetch user's device location on component mount and set it as selectedLocation.
+- [x] Modify `client/src/components/predictions/ForecastPanel.jsx` to perform reverse geocoding for the selected location and display the location name in the forecast header instead of lat/lng coordinates.
+- [ ] Test the implementation: Ensure geolocation works, map centers and shows marker, forecast loads, and location name displays correctly.
+- [ ] Handle edge cases: Geolocation permission denied, API failures for reverse geocoding.
+
+## Notes
+- Use `navigator.geolocation.getCurrentPosition` for fetching location.
+- Use Nominatim reverse API for getting location name from lat/lng.
+- Update ForecastPanel header to show location name when available.

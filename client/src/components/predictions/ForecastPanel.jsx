@@ -25,10 +25,12 @@ const ForecastPanel = ({ location, onForecastData }) => {
   const [forecast, setForecast] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [locationName, setLocationName] = useState(null);
 
   useEffect(() => {
     if (location) {
       fetchForecast(location);
+      fetchLocationName(location);
     }
   }, [location]);
 
@@ -55,6 +57,22 @@ const ForecastPanel = ({ location, onForecastData }) => {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchLocationName = async ({ lat, lng }) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`
+      );
+      if (!response.ok) {
+        throw new Error('Failed to fetch location name');
+      }
+      const data = await response.json();
+      setLocationName(data.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+    } catch (err) {
+      console.error('Reverse geocoding error:', err);
+      setLocationName(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
     }
   };
 
@@ -145,7 +163,7 @@ const ForecastPanel = ({ location, onForecastData }) => {
 
   return (
     <div style={{ padding: '20px', maxHeight: '80vh', overflowY: 'auto' }}>
-      <h3>Forecast for {location.lat.toFixed(4)}, {location.lng.toFixed(4)}</h3>
+      <h3>Forecast for {locationName || `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`}</h3>
 
       {renderChart(forecast.hourly.temperature_2m, 'Temperature', '#ff6384', '°C')}
       {renderChart(forecast.hourly.precipitation_probability, 'Precipitation Probability', '#36a2eb', '%')}
