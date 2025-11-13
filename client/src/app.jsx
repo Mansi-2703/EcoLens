@@ -35,8 +35,16 @@ export default function App() {
       </div>
 
       <main className="content flex flex-col flex-1 min-h-screen p-0">
-        {/* Show header only on dashboard page */}
+        {/* Show header on dashboard page with coordinates */}
         {activePage === "dashboard" && <Header coordinates={coordinates} />}
+        
+        {/* Show header on analytics page with forest cover title */}
+        {activePage === "analytics" && (
+          <header className="header">
+            <h2 className="gradient-text">Global Forest Cover</h2>
+            <p className="coords">Real-time global forest cover monitoring</p>
+          </header>
+        )}
 
         <div className="page-content">
           {/* 🌍 Dashboard shows Global Air Quality Monitor */}
