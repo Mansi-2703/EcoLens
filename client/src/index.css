@@ -55,7 +55,7 @@ body,
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: 70px;
 }
 
 /* Navigation buttons stacked vertically */
@@ -174,16 +174,18 @@ body,
 .logo {
   font-weight: 700;
   color: var(--accent);
-  font-size: 1.3rem;
+  font-size: 1.8rem;
   text-align: left;
   transition: font-size 0.3s ease;
   white-space: nowrap;
   overflow: hidden;
+  padding-top: 10px;
 }
 
 .sidebar.collapsed .logo {
-  font-size: 1.1rem;
+  font-size: 1.4rem;
   text-align: center;
+  padding-top: 10px;
 }
 
 .navbutton {
