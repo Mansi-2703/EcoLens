@@ -3,13 +3,30 @@ import React from 'react';
 export default function LandingPage({ onGetStarted }) {
   return (
     <div className="landing-page">
+
+      {/* ---- Background Video ---- */}
+      <video
+        className="bg-video"
+        autoPlay
+        muted
+        loop
+        playsInline
+        src="/newforest_bg.mp4"
+      />
+
+      {/* ---- Dark Overlay ---- */}
+      <div className="overlay"></div>
+
+      {/* ---- Main Content ---- */}
       <div className="landing-content">
         <h1 className="landing-title">EcoLens</h1>
+
         <p className="landing-subtitle">
           An interactive dashboard for environmental monitoring,
           <br />
           powered by real-time global data insights.
         </p>
+
         <button className="get-started-btn" onClick={onGetStarted}>
           Get Started
         </button>
@@ -18,128 +35,109 @@ export default function LandingPage({ onGetStarted }) {
       <style>{`
         .landing-page {
           position: fixed;
-          top: 0;
-          left: 0;
+          inset: 0;
           width: 100vw;
           height: 100vh;
           display: flex;
           justify-content: center;
           align-items: center;
-          background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 50%, #0f1729 100%);
-          z-index: 10000;
           overflow: hidden;
+          z-index: 10000;
+          background: black;
         }
 
-        .landing-page::before {
-          content: '';
+        /* --- Video Background --- */
+        .bg-video {
           position: absolute;
-          width: 200%;
-          height: 200%;
-          background: radial-gradient(circle at 30% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
-                      radial-gradient(circle at 70% 60%, rgba(16, 185, 129, 0.15) 0%, transparent 50%);
-          animation: bgMove 20s ease-in-out infinite;
+          top: 50%;
+          left: 50%;
+          width: 110%;
+          height: 110%;
+          object-fit: cover;
+          transform: translate(-50%, -50%);
+          z-index: 1;
+          filter: brightness(0.75) saturate(1.1); /* brighter */
         }
 
-        @keyframes bgMove {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(-10%, -10%); }
-        }
-
-        .landing-content {
-          position: relative;
+        /* --- Dark Overlay --- */
+        .overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(0,0,0,0.35); /* lighter overlay */
           z-index: 2;
-          text-align: center;
-          animation: fadeInUp 1s ease-out;
         }
 
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
+        /* --- EcoLens Title --- */
         .landing-title {
-          font-size: 5rem;
+          font-size: 6rem;
           font-weight: 800;
           margin: 0 0 20px 0;
-          background: linear-gradient(135deg, #00f5a0 0%, #00c6ff 50%, #00e0b8 100%);
-          background-size: 200% 200%;
-          -webkit-background-clip: text;
-          background-clip: text;
-          -webkit-text-fill-color: transparent;
-          animation: gradientShift 4s ease infinite;
+          color: rgba(255, 255, 255, 0.9); /* slightly more opaque */
+          text-shadow:
+            0 0 25px rgba(255,255,255,0.3),
+            0 4px 20px rgba(0,0,0,0.6);
           letter-spacing: -2px;
         }
 
-        @keyframes gradientShift {
-          0%, 100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-        }
-
+        /* Subtitle */
         .landing-subtitle {
           font-size: 1.25rem;
-          color: #94a3b8;
-          margin: 0 0 50px 0;
+          color: #d1d5db;
+          margin-bottom: 50px;
           line-height: 1.8;
           max-width: 600px;
           margin-left: auto;
           margin-right: auto;
         }
 
+        /* --- Transparent Glass Button --- */
         .get-started-btn {
-          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-          color: white;
+          background: rgba(255, 255, 255, 0.35);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          border: 1px solid rgba(255,255,255,0.5);
+          color: black;
           font-size: 1.1rem;
-          font-weight: 600;
+          font-weight: 700;
           padding: 16px 48px;
-          border: none;
-          border-radius: 50px;
+          border-radius: 40px;
           cursor: pointer;
-          transition: all 0.3s ease;
-          box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
-          position: relative;
-          overflow: hidden;
-        }
-
-        .get-started-btn::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-          transition: left 0.5s ease;
-        }
-
-        .get-started-btn:hover::before {
-          left: 100%;
+          transition: all 0.25s ease;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         }
 
         .get-started-btn:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 15px 40px rgba(59, 130, 246, 0.4);
+          background: rgba(255, 255, 255, 0.6);
+          transform: translateY(-4px);
+          box-shadow: 0 15px 35px rgba(0,0,0,0.3);
         }
 
         .get-started-btn:active {
           transform: translateY(-1px);
         }
 
+        /* Fade In Animation */
+        .landing-content {
+          position: relative;
+          z-index: 5;
+          text-align: center;
+          animation: fadeInUp 1.1s ease-out;
+        }
+
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Mobile Responsive --- */
         @media (max-width: 768px) {
           .landing-title {
-            font-size: 3rem;
+            font-size: 3.2rem;
           }
-
           .landing-subtitle {
             font-size: 1rem;
             padding: 0 20px;
           }
-
           .get-started-btn {
             font-size: 1rem;
             padding: 14px 40px;
