@@ -623,7 +623,6 @@ export default function Marine() {
         .map-container {
           width: 100%;
           max-width: 1400px;
-          margin-bottom: 40px;
           position: relative;
         }
 

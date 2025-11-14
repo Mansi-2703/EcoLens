@@ -679,6 +679,7 @@ export default function Climate({ lat, lon }) {
           overflow: hidden;
           border: 1px solid rgba(148, 163, 184, 0.2);
           backdrop-filter: blur(20px);
+          margin-bottom: 40px;
         }
 
         .map-toggle {
