@@ -69,14 +69,14 @@ export default function LandingPage({ onGetStarted }) {
 
         /* --- EcoLens Title --- */
         .landing-title {
-          font-size: 6rem;
-          font-weight: 800;
+          font-family: 'Montserrat', sans-serif;
+          font-size: 8rem;
+          font-weight: 1000;
           margin: 0 0 20px 0;
-          color: rgba(255, 255, 255, 0.9); /* slightly more opaque */
-          text-shadow:
-            0 0 25px rgba(255,255,255,0.3),
-            0 4px 20px rgba(0,0,0,0.6);
+          color: rgba(255, 255, 255, 0.62);
           letter-spacing: -2px;
+          -webkit-text-stroke: 4px #0a350aff;
+          text-stroke: 4px #357235ff;
         }
 
         /* Subtitle */
@@ -128,6 +128,10 @@ export default function LandingPage({ onGetStarted }) {
           from { opacity: 0; transform: translateY(30px); }
           to { opacity: 1; transform: translateY(0); }
         }
+
+
+
+
 
         /* --- Mobile Responsive --- */
         @media (max-width: 768px) {
