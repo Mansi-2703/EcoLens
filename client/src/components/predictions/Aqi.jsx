@@ -47,6 +47,11 @@ export default function Aqi() {
   const [lonInput, setLonInput] = useState('');
   const gridRef = useRef(null);
 
+  // Past 3-month trends state
+  const [trendsData, setTrendsData] = useState([]);
+  const [trendsLoading, setTrendsLoading] = useState(false);
+  const [trendsError, setTrendsError] = useState(null);
+
   // Fetch location name using reverse geocoding with high granularity (matching Real-Time Monitor)
   useEffect(() => {
     const fetchLocationName = async () => {
@@ -152,6 +157,27 @@ export default function Aqi() {
     fetchAirQuality();
   }, [lat, lon, selectedDay]);
 
+  // Fetch 3-month trends data whenever lat/lon changes
+  useEffect(() => {
+    const fetchTrendsData = async () => {
+      setTrendsLoading(true);
+      try {
+        const response = await fetch(
+          `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=pm10,pm2_5,us_aqi&past_days=92&forecast_days=1`
+        );
+        if (!response.ok) throw new Error('Failed to fetch trends data');
+        const data = await response.json();
+        const processedTrends = processTrendsData(data);
+        setTrendsData(processedTrends);
+      } catch (err) {
+        setTrendsError(err.message);
+      } finally {
+        setTrendsLoading(false);
+      }
+    };
+    fetchTrendsData();
+  }, [lat, lon]);
+
   const processDailyAverages = (data) => {
     const { hourly } = data;
     const times = hourly.time;
@@ -192,6 +218,22 @@ export default function Aqi() {
       dust: values.dust.length > 0 ? (values.dust.reduce((a, b) => a + b, 0) / values.dust.length).toFixed(1) : 'N/A',
       uvIndex: (values.uvIndex.reduce((a, b) => a + b, 0) / values.uvIndex.length).toFixed(1),
     }));
+  };
+
+  const processTrendsData = (data) => {
+    const { hourly } = data;
+    const times = hourly.time;
+    const usAqi = hourly.us_aqi || [];
+    const pm25 = hourly.pm2_5;
+    const pm10 = hourly.pm10;
+
+    return times.map((time, index) => ({
+      time,
+      date: new Date(time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      pm10: pm10[index] || null,
+      pm25: pm25[index] || null,
+      usAqi: usAqi[index] || null,
+    })).sort((a, b) => new Date(a.time) - new Date(b.time)); // Ensure sorted by time
   };
 
   const getAirQualityStatus = (pm25) => {
@@ -260,11 +302,15 @@ export default function Aqi() {
 
   return (
     <div className="aqi-page">
-      {/* Header */}
-      <div className="aqi-header">
-        <h2>Air Quality Predictions</h2>
-        <p className="aqi-subtitle">{locationName}</p>
-      </div>
+      {/* Header Bar */}
+      <header className="aqi-header-bar">
+        <div className="header-content">
+          <div className="title-section">
+            <h2 className="gradient-text">Air Quality Predictions</h2>
+            <p className="coords">{locationName}</p>
+          </div>
+        </div>
+      </header>
 
       {/* 2D Map */}
       <div className="map-container">
@@ -664,8 +710,8 @@ export default function Aqi() {
                 stroke="#cbd5e1"
                 tick={{ fontSize: 12 }}
               />
-              <YAxis 
-                stroke="#cbd5e1" 
+              <YAxis
+                stroke="#cbd5e1"
                 tick={{ fontSize: 12 }}
                 label={{ value: 'Daily Average', angle: -90, position: 'insideLeft', style: { fill: '#cbd5e1', fontSize: 12 } }}
               />
@@ -684,7 +730,7 @@ export default function Aqi() {
                   return order.indexOf(item.name);
                 }}
               />
-              <Legend 
+              <Legend
                 wrapperStyle={{ paddingTop: '20px' }}
                 iconType="line"
                 iconSize={20}
@@ -775,6 +821,136 @@ export default function Aqi() {
         </div>
       )}
 
+      {/* Past 3-Month AQI Trends */}
+      <div className="trends-section">
+        <h3 className="chart-title">Past 3-Month AQI Trends</h3>
+        {trendsLoading && <p>Loading trends...</p>}
+        {trendsError && <p>Error: {trendsError}</p>}
+        {trendsData.length > 0 && (
+          <>
+            {/* PM10 Trend */}
+            <div className="chart-container">
+              <h4 className="chart-subtitle">PM10 Trend</h4>
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={trendsData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
+                  <XAxis
+                    dataKey="date"
+                    tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    stroke="rgba(255,255,255,0.7)"
+                    tick={{ fontSize: 12 }}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis
+                    stroke="rgba(255,255,255,0.7)"
+                    tick={{ fontSize: 12 }}
+                    domain={[0, 'auto']}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'rgba(0,0,0,0.9)',
+                      border: '1px solid rgba(255,255,255,0.3)',
+                      borderRadius: '10px',
+                      color: '#fff',
+                      padding: '12px'
+                    }}
+                    labelFormatter={(date) => new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="pm10"
+                    stroke="#6ac3ff"
+                    strokeWidth={2}
+                    dot={false}
+                    connectNulls={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* PM2.5 Trend */}
+            <div className="chart-container">
+              <h4 className="chart-subtitle">PM2.5 Trend</h4>
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={trendsData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
+                  <XAxis
+                    dataKey="date"
+                    tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    stroke="rgba(255,255,255,0.7)"
+                    tick={{ fontSize: 12 }}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis
+                    stroke="rgba(255,255,255,0.7)"
+                    tick={{ fontSize: 12 }}
+                    domain={[0, 'auto']}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'rgba(0,0,0,0.9)',
+                      border: '1px solid rgba(255,255,255,0.3)',
+                      borderRadius: '10px',
+                      color: '#fff',
+                      padding: '12px'
+                    }}
+                    labelFormatter={(date) => new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="pm25"
+                    stroke="#9b7bff"
+                    strokeWidth={2}
+                    dot={false}
+                    connectNulls={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* US AQI Trend */}
+            <div className="chart-container">
+              <h4 className="chart-subtitle">US AQI Trend</h4>
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={trendsData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
+                  <XAxis
+                    dataKey="date"
+                    tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    stroke="rgba(255,255,255,0.7)"
+                    tick={{ fontSize: 12 }}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis
+                    stroke="rgba(255,255,255,0.7)"
+                    tick={{ fontSize: 12 }}
+                    domain={[0, 'auto']}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'rgba(0,0,0,0.9)',
+                      border: '1px solid rgba(255,255,255,0.3)',
+                      borderRadius: '10px',
+                      color: '#fff',
+                      padding: '12px'
+                    }}
+                    labelFormatter={(date) => new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="usAqi"
+                    stroke="#6fff9e"
+                    strokeWidth={2}
+                    dot={false}
+                    connectNulls={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </>
+        )}
+      </div>
+
       {/* Styles */}
       <style>{`
         .aqi-page {
@@ -783,8 +959,69 @@ export default function Aqi() {
           align-items: center;
           background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
           color: #f1f5f9;
-          padding: 40px 20px;
+          padding: 0;
           min-height: 100vh;
+        }
+
+        .aqi-header-bar {
+          position: sticky;
+          top: 0;
+          z-index: 999;
+          width: 100%;
+          display: flex;
+          justify-content: center;
+          background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          padding: 20px 20px;
+          margin-bottom: 32px;
+          backdrop-filter: blur(10px);
+          min-height: 100px;
+        }
+
+        .header-content {
+          width: 100%;
+          max-width: 1400px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+
+        .logo-section {
+          display: flex;
+          align-items: center;
+          margin-left: 20px;
+        }
+
+        .header-logo {
+          height: 80px;
+          width: auto;
+        }
+
+        .title-section {
+          flex: 1;
+          text-align: center;
+        }
+
+        .gradient-text {
+          margin: 0;
+          font-size: 1.5rem;
+          background: linear-gradient(270deg, #00f5a0 0%, #00c6ff 50%, #00e0b8 100%);
+          background-size: 600% 600%;
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: gradientShift 8s ease infinite;
+        }
+
+        @keyframes gradientShift {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+
+        .coords {
+          font-size: 0.95rem;
+          color: #94a3b8;
+          margin: 5px 0 0 0;
         }
 
         .aqi-header {
@@ -813,7 +1050,7 @@ export default function Aqi() {
         .map-container {
           width: 100%;
           max-width: 1400px;
-          margin-bottom: 40px;
+          margin: 0 20px 40px 20px;
           position: relative;
         }
 
