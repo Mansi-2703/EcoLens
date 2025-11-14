@@ -6,6 +6,7 @@ import GlobePage from "./components/Globe"; // This holds your Globe component
 import Aqi from "./components/predictions/Aqi";
 import Marine from "./components/predictions/Marine";
 import Climate from "./components/predictions/Climate";
+import GlacierInsights from "./components/GlacierInsights";
 import "./index.css";
 
 export default function App() {
@@ -46,6 +47,14 @@ export default function App() {
           </header>
         )}
 
+        {/* Show header on glacier page */}
+        {activePage === "glacier" && (
+          <header className="header">
+            <h2 className="gradient-text">Glacier Insights</h2>
+            <p className="coords">Advanced glacier monitoring and analysis</p>
+          </header>
+        )}
+
         <div className="page-content">
           {/* 🌍 Dashboard shows Global Air Quality Monitor */}
           {activePage === "dashboard" && <GlobePage onPick={handleGlobePick} />}
@@ -53,9 +62,9 @@ export default function App() {
           {/* Forest Cover / Analytics */}
           {activePage === "analytics" && <ForestMap />}
 
+          {/* Glacier Insights */}
+          {activePage === "glacier" && <GlacierInsights />}
 
-
-    
           {/* Misc placeholders kept for compatibility */}
           {activePage === "reports" && <div className="page">Reports Page</div>}
           {activePage === "settings" && <div className="page">Settings Page</div>}
