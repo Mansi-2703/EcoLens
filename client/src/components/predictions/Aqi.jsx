@@ -21,7 +21,77 @@ export default function Aqi() {
   const [mapType, setMapType] = useState('street'); // 'street' or 'satellite'
   const [selectedDay, setSelectedDay] = useState(null);
   const [hourlyData, setHourlyData] = useState([]);
+  const [locationName, setLocationName] = useState('Click on the map to choose location');
+  const [searchType, setSearchType] = useState('location'); // 'location' or 'coordinates'
+  const [searchInput, setSearchInput] = useState('');
+  const [latInput, setLatInput] = useState('');
+  const [lonInput, setLonInput] = useState('');
   const gridRef = useRef(null);
+
+  // Fetch location name using reverse geocoding with high granularity (matching Real-Time Monitor)
+  useEffect(() => {
+    const fetchLocationName = async () => {
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`
+        );
+        if (!response.ok) {
+          throw new Error('Failed to fetch location name');
+        }
+        const data = await response.json();
+        
+        // Build precise location string from address components (matching Header.jsx)
+        let locationParts = [];
+        
+        if (data.address) {
+          const addr = data.address;
+          
+          // Add specific place name (building, attraction, etc.)
+          if (addr.tourism) locationParts.push(addr.tourism);
+          else if (addr.amenity) locationParts.push(addr.amenity);
+          else if (addr.building) locationParts.push(addr.building);
+          else if (addr.shop) locationParts.push(addr.shop);
+          else if (addr.office) locationParts.push(addr.office);
+          
+          // Add road/street
+          if (addr.road) locationParts.push(addr.road);
+          else if (addr.pedestrian) locationParts.push(addr.pedestrian);
+          
+          // Add neighborhood/suburb
+          if (addr.neighbourhood) locationParts.push(addr.neighbourhood);
+          else if (addr.suburb) locationParts.push(addr.suburb);
+          else if (addr.quarter) locationParts.push(addr.quarter);
+          
+          // Add city/town
+          if (addr.city) locationParts.push(addr.city);
+          else if (addr.town) locationParts.push(addr.town);
+          else if (addr.village) locationParts.push(addr.village);
+          else if (addr.municipality) locationParts.push(addr.municipality);
+          
+          // Add state/region
+          if (addr.state) locationParts.push(addr.state);
+          
+          // Add country
+          if (addr.country) locationParts.push(addr.country);
+        }
+        
+        // Format location name
+        if (locationParts.length > 0) {
+          const address = locationParts.slice(0, 4).join(', ');
+          setLocationName(`📍 ${address} (Lat: ${lat.toFixed(3)}, Lng: ${lon.toFixed(3)})`);
+        } else if (data.display_name) {
+          const parts = data.display_name.split(',').slice(0, 3);
+          setLocationName(`📍 ${parts.join(',')} (Lat: ${lat.toFixed(3)}, Lng: ${lon.toFixed(3)})`);
+        } else {
+          setLocationName(`📍 Lat ${lat.toFixed(3)}, Lon ${lon.toFixed(3)}`);
+        }
+      } catch (err) {
+        console.error('Reverse geocoding error:', err);
+        setLocationName(`📍 Lat ${lat.toFixed(3)}, Lon ${lon.toFixed(3)}`);
+      }
+    };
+    fetchLocationName();
+  }, [lat, lon]);
 
   // Fetch AQI data whenever lat/lon changes
   useEffect(() => {
@@ -110,12 +180,51 @@ export default function Aqi() {
     return <Marker position={[lat, lon]} />;
   }
 
+  // Handle search submission
+  const handleSearch = async () => {
+    if (searchType === 'location') {
+      if (!searchInput.trim()) return;
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchInput)}&format=json&limit=1`
+        );
+        const data = await response.json();
+        if (data && data.length > 0) {
+          setLat(parseFloat(data[0].lat));
+          setLon(parseFloat(data[0].lon));
+          setSearchInput('');
+        } else {
+          alert('Location not found. Please try a different search term.');
+        }
+      } catch (err) {
+        console.error('Geocoding error:', err);
+        alert('Error searching for location. Please try again.');
+      }
+    } else {
+      // Coordinates search
+      const latitude = parseFloat(latInput);
+      const longitude = parseFloat(lonInput);
+      if (!isNaN(latitude) && !isNaN(longitude)) {
+        if (latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180) {
+          setLat(latitude);
+          setLon(longitude);
+          setLatInput('');
+          setLonInput('');
+        } else {
+          alert('Please enter valid coordinates (Latitude: -90 to 90, Longitude: -180 to 180)');
+        }
+      } else {
+        alert('Please enter valid numeric coordinates');
+      }
+    }
+  };
+
   return (
     <div className="aqi-page">
       {/* Header */}
       <div className="aqi-header">
         <h2>Air Quality Predictions</h2>
-        <p className="aqi-subtitle">Click on the map to choose location</p>
+        <p className="aqi-subtitle">{locationName}</p>
       </div>
 
       {/* 2D Map */}
@@ -156,31 +265,123 @@ export default function Aqi() {
         </MapContainer>
       </div>
 
-      {/* Input boxes for lat/lon */}
-      <div className="location-inputs">
-        <div className="input-group">
-          <label htmlFor="latitude">Latitude:</label>
-          <input
-            type="number"
-            id="latitude"
-            value={lat}
-            onChange={(e) => setLat(parseFloat(e.target.value))}
-            step="0.01"
-            min="-90"
-            max="90"
-          />
-        </div>
-        <div className="input-group">
-          <label htmlFor="longitude">Longitude:</label>
-          <input
-            type="number"
-            id="longitude"
-            value={lon}
-            onChange={(e) => setLon(parseFloat(e.target.value))}
-            step="0.01"
-            min="-180"
-            max="180"
-          />
+      {/* Search Bar */}
+      <div style={{
+        background: 'rgba(255, 255, 255, 0.03)',
+        padding: '20px',
+        borderRadius: '12px',
+        marginBottom: '20px',
+        border: '1px solid rgba(26, 216, 205, 0.2)'
+      }}>
+        <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+          {/* Search Type Dropdown */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>Search By:</label>
+            <select
+              value={searchType}
+              onChange={(e) => setSearchType(e.target.value)}
+              style={{
+                padding: '10px 15px',
+                borderRadius: '8px',
+                border: '1px solid rgba(26, 216, 205, 0.3)',
+                background: 'rgba(16, 24, 32, 0.8)',
+                color: '#e6f0f0',
+                fontSize: '0.95rem',
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+            >
+              <option value="location">Location Name</option>
+              <option value="coordinates">Lat/Long</option>
+            </select>
+          </div>
+
+          {/* Search Input Fields */}
+          {searchType === 'location' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, minWidth: '200px' }}>
+              <label style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>Location:</label>
+              <input
+                type="text"
+                placeholder="Enter city, address, or place..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                style={{
+                  padding: '10px 15px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(26, 216, 205, 0.3)',
+                  background: 'rgba(16, 24, 32, 0.8)',
+                  color: '#e6f0f0',
+                  fontSize: '0.95rem',
+                  outline: 'none'
+                }}
+              />
+            </div>
+          ) : (
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, minWidth: '150px' }}>
+                <label style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>Latitude:</label>
+                <input
+                  type="number"
+                  placeholder="e.g., 40.7128"
+                  value={latInput}
+                  onChange={(e) => setLatInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  step="0.0001"
+                  style={{
+                    padding: '10px 15px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(26, 216, 205, 0.3)',
+                    background: 'rgba(16, 24, 32, 0.8)',
+                    color: '#e6f0f0',
+                    fontSize: '0.95rem',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, minWidth: '150px' }}>
+                <label style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>Longitude:</label>
+                <input
+                  type="number"
+                  placeholder="e.g., -74.0060"
+                  value={lonInput}
+                  onChange={(e) => setLonInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  step="0.0001"
+                  style={{
+                    padding: '10px 15px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(26, 216, 205, 0.3)',
+                    background: 'rgba(16, 24, 32, 0.8)',
+                    color: '#e6f0f0',
+                    fontSize: '0.95rem',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Search Button */}
+          <button
+            onClick={handleSearch}
+            style={{
+              padding: '10px 30px',
+              borderRadius: '8px',
+              border: 'none',
+              background: 'linear-gradient(135deg, var(--accent), #00c6ff)',
+              color: '#0b0b0f',
+              fontSize: '0.95rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 15px rgba(26, 216, 205, 0.3)'
+            }}
+            onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
+            onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+          >
+            🔍 Search
+          </button>
         </div>
       </div>
 
