@@ -99,7 +99,7 @@ export default function Aqi() {
       setLoading(true);
       try {
         const response = await fetch(
-          `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=pm10,pm2_5,sulphur_dioxide,uv_index&forecast_days=5&timezone=auto`
+          `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=us_aqi,pm2_5,pm10,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone,dust,uv_index&forecast_days=5&timezone=auto`
         );
         if (!response.ok) throw new Error('Failed to fetch air quality data');
         const data = await response.json();
@@ -109,9 +109,14 @@ export default function Aqi() {
         const hourly = data.hourly;
         const processedHourly = hourly.time.map((time, index) => ({
           time,
-          pm10: hourly.pm10[index],
+          usAqi: hourly.us_aqi?.[index],
           pm25: hourly.pm2_5[index],
+          pm10: hourly.pm10[index],
+          co: hourly.carbon_monoxide?.[index],
+          no2: hourly.nitrogen_dioxide?.[index],
           so2: hourly.sulphur_dioxide[index],
+          ozone: hourly.ozone?.[index],
+          dust: hourly.dust?.[index],
           uvIndex: hourly.uv_index[index],
         }));
         setHourlyData(processedHourly);
@@ -131,26 +136,41 @@ export default function Aqi() {
   const processDailyAverages = (data) => {
     const { hourly } = data;
     const times = hourly.time;
-    const pm10 = hourly.pm10;
+    const usAqi = hourly.us_aqi || [];
     const pm25 = hourly.pm2_5;
+    const pm10 = hourly.pm10;
+    const co = hourly.carbon_monoxide || [];
+    const no2 = hourly.nitrogen_dioxide || [];
     const so2 = hourly.sulphur_dioxide;
+    const ozone = hourly.ozone || [];
+    const dust = hourly.dust || [];
     const uvIndex = hourly.uv_index;
 
     const dailyData = {};
     times.forEach((time, index) => {
       const date = time.split('T')[0];
-      if (!dailyData[date]) dailyData[date] = { pm10: [], pm25: [], so2: [], uvIndex: [] };
-      dailyData[date].pm10.push(pm10[index]);
+      if (!dailyData[date]) dailyData[date] = { usAqi: [], pm25: [], pm10: [], co: [], no2: [], so2: [], ozone: [], dust: [], uvIndex: [] };
+      if (usAqi[index] != null) dailyData[date].usAqi.push(usAqi[index]);
       dailyData[date].pm25.push(pm25[index]);
+      dailyData[date].pm10.push(pm10[index]);
+      if (co[index] != null) dailyData[date].co.push(co[index]);
+      if (no2[index] != null) dailyData[date].no2.push(no2[index]);
       dailyData[date].so2.push(so2[index]);
+      if (ozone[index] != null) dailyData[date].ozone.push(ozone[index]);
+      if (dust[index] != null) dailyData[date].dust.push(dust[index]);
       dailyData[date].uvIndex.push(uvIndex[index]);
     });
 
     return Object.entries(dailyData).map(([date, values]) => ({
       date,
-      pm10: (values.pm10.reduce((a, b) => a + b, 0) / values.pm10.length).toFixed(1),
+      usAqi: values.usAqi.length > 0 ? (values.usAqi.reduce((a, b) => a + b, 0) / values.usAqi.length).toFixed(1) : 'N/A',
       pm25: (values.pm25.reduce((a, b) => a + b, 0) / values.pm25.length).toFixed(1),
+      pm10: (values.pm10.reduce((a, b) => a + b, 0) / values.pm10.length).toFixed(1),
+      co: values.co.length > 0 ? (values.co.reduce((a, b) => a + b, 0) / values.co.length).toFixed(1) : 'N/A',
+      no2: values.no2.length > 0 ? (values.no2.reduce((a, b) => a + b, 0) / values.no2.length).toFixed(1) : 'N/A',
       so2: (values.so2.reduce((a, b) => a + b, 0) / values.so2.length).toFixed(1),
+      ozone: values.ozone.length > 0 ? (values.ozone.reduce((a, b) => a + b, 0) / values.ozone.length).toFixed(1) : 'N/A',
+      dust: values.dust.length > 0 ? (values.dust.reduce((a, b) => a + b, 0) / values.dust.length).toFixed(1) : 'N/A',
       uvIndex: (values.uvIndex.reduce((a, b) => a + b, 0) / values.uvIndex.length).toFixed(1),
     }));
   };
@@ -413,7 +433,36 @@ export default function Aqi() {
                       <p className="card-status">{status.label}</p>
                     </div>
                   </div>
-                  <div className="card-metrics">
+                  
+                  {/* US AQI - Full Width */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '12px 15px',
+                    background: 'rgba(139, 92, 246, 0.15)',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(139, 92, 246, 0.3)',
+                    marginBottom: '12px'
+                  }}>
+                    <span style={{ 
+                      fontSize: '0.95rem',
+                      fontWeight: '600',
+                      color: '#a78bfa'
+                    }}>US AQI</span>
+                    <span style={{ 
+                      fontSize: '1.2rem',
+                      fontWeight: '700',
+                      color: '#c4b5fd'
+                    }}>{day.usAqi}</span>
+                  </div>
+
+                  {/* Other Metrics - Two Columns */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '10px'
+                  }}>
                     <div className="metric">
                       <span className="metric-label">PM2.5</span>
                       <span className="metric-value">{day.pm25}</span>
@@ -423,8 +472,24 @@ export default function Aqi() {
                       <span className="metric-value">{day.pm10}</span>
                     </div>
                     <div className="metric">
+                      <span className="metric-label">CO</span>
+                      <span className="metric-value">{day.co}</span>
+                    </div>
+                    <div className="metric">
+                      <span className="metric-label">NO₂</span>
+                      <span className="metric-value">{day.no2}</span>
+                    </div>
+                    <div className="metric">
                       <span className="metric-label">SO₂</span>
                       <span className="metric-value">{day.so2}</span>
+                    </div>
+                    <div className="metric">
+                      <span className="metric-label">O₃</span>
+                      <span className="metric-value">{day.ozone}</span>
+                    </div>
+                    <div className="metric">
+                      <span className="metric-label">Dust</span>
+                      <span className="metric-value">{day.dust}</span>
                     </div>
                     <div className="metric">
                       <span className="metric-label">UV</span>
@@ -442,89 +507,54 @@ export default function Aqi() {
       {selectedDay && hourlyData.length > 0 && (
         <div className="chart-container">
           <h3 className="chart-title">Hourly AQI for {formatDate(selectedDay)}</h3>
-          <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={hourlyData.filter(item => item.time.startsWith(selectedDay))}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" />
+          <ResponsiveContainer width="100%" height={500}>
+            <LineChart 
+              data={hourlyData.filter(item => item.time.startsWith(selectedDay))}
+              margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" opacity={0.3} />
               <XAxis
                 dataKey="time"
                 tickFormatter={(time) => new Date(time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                 stroke="#cbd5e1"
+                tick={{ fontSize: 12 }}
+                interval="preserveStartEnd"
               />
-              <YAxis stroke="#cbd5e1" />
+              <YAxis 
+                stroke="#cbd5e1"
+                tick={{ fontSize: 12 }}
+                label={{ value: 'Concentration (μg/m³)', angle: -90, position: 'insideLeft', style: { fill: '#cbd5e1', fontSize: 12 } }}
+                domain={[0, 'auto']}
+              />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: 'rgba(30, 41, 59, 0.9)',
-                  border: '1px solid rgba(148, 163, 184, 0.3)',
-                  borderRadius: '8px',
-                  color: '#f1f5f9'
+                  backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                  border: '1px solid rgba(148, 163, 184, 0.5)',
+                  borderRadius: '10px',
+                  color: '#f1f5f9',
+                  padding: '12px'
                 }}
                 labelFormatter={(time) => new Date(time).toLocaleString('en-US', { weekday: 'long', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="pm25"
-                stroke="#10b981"
-                strokeWidth={2}
-                name="PM2.5"
-                dot={{ fill: '#10b981', strokeWidth: 1, r: 3 }}
-                activeDot={{ r: 5, stroke: '#10b981', strokeWidth: 2 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="pm10"
-                stroke="#f59e0b"
-                strokeWidth={2}
-                name="PM10"
-                dot={{ fill: '#f59e0b', strokeWidth: 1, r: 3 }}
-                activeDot={{ r: 5, stroke: '#f59e0b', strokeWidth: 2 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="so2"
-                stroke="#ef4444"
-                strokeWidth={2}
-                name="SO₂"
-                dot={{ fill: '#ef4444', strokeWidth: 1, r: 3 }}
-                activeDot={{ r: 5, stroke: '#ef4444', strokeWidth: 2 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="uvIndex"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                name="UV Index"
-                dot={{ fill: '#3b82f6', strokeWidth: 1, r: 3 }}
-                activeDot={{ r: 5, stroke: '#3b82f6', strokeWidth: 2 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
-      {/* AQI Chart */}
-      {forecast.length > 0 && (
-        <div className="chart-container">
-          <h3 className="chart-title">AQI Trends</h3>
-          <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={forecast}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" />
-              <XAxis
-                dataKey="date"
-                tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                stroke="#cbd5e1"
-              />
-              <YAxis stroke="#cbd5e1" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'rgba(30, 41, 59, 0.9)',
-                  border: '1px solid rgba(148, 163, 184, 0.3)',
-                  borderRadius: '8px',
-                  color: '#f1f5f9'
+                itemStyle={{ fontSize: '13px', padding: '3px 0' }}
+                itemSorter={(item) => {
+                  const order = ['US AQI', 'PM2.5', 'PM10', 'CO', 'NO₂', 'SO₂', 'O₃', 'Dust', 'UV Index'];
+                  return order.indexOf(item.name);
                 }}
-                labelFormatter={(date) => new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
               />
-              <Legend />
+              <Legend 
+                wrapperStyle={{ paddingTop: '20px' }}
+                iconType="line"
+                iconSize={20}
+              />
+              <Line
+                type="monotone"
+                dataKey="usAqi"
+                stroke="#8b5cf6"
+                strokeWidth={3}
+                name="US AQI"
+                dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#8b5cf6', strokeWidth: 2 }}
+              />
               <Line
                 type="monotone"
                 dataKey="pm25"
@@ -545,12 +575,172 @@ export default function Aqi() {
               />
               <Line
                 type="monotone"
+                dataKey="co"
+                stroke="#06b6d4"
+                strokeWidth={3}
+                name="CO"
+                dot={{ fill: '#06b6d4', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#06b6d4', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="no2"
+                stroke="#f97316"
+                strokeWidth={3}
+                name="NO₂"
+                dot={{ fill: '#f97316', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#f97316', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
                 dataKey="so2"
                 stroke="#ef4444"
                 strokeWidth={3}
                 name="SO₂"
                 dot={{ fill: '#ef4444', strokeWidth: 2, r: 4 }}
                 activeDot={{ r: 6, stroke: '#ef4444', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="ozone"
+                stroke="#14b8a6"
+                strokeWidth={3}
+                name="O₃"
+                dot={{ fill: '#14b8a6', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#14b8a6', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="dust"
+                stroke="#a3a3a3"
+                strokeWidth={3}
+                name="Dust"
+                dot={{ fill: '#a3a3a3', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#a3a3a3', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="uvIndex"
+                stroke="#3b82f6"
+                strokeWidth={3}
+                name="UV Index"
+                dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#3b82f6', strokeWidth: 2 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* AQI Chart */}
+      {forecast.length > 0 && (
+        <div className="chart-container">
+          <h3 className="chart-title">AQI Trends</h3>
+          <ResponsiveContainer width="100%" height={500}>
+            <LineChart data={forecast} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" opacity={0.3} />
+              <XAxis
+                dataKey="date"
+                tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                stroke="#cbd5e1"
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis 
+                stroke="#cbd5e1" 
+                tick={{ fontSize: 12 }}
+                label={{ value: 'Daily Average', angle: -90, position: 'insideLeft', style: { fill: '#cbd5e1', fontSize: 12 } }}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                  border: '1px solid rgba(148, 163, 184, 0.5)',
+                  borderRadius: '10px',
+                  color: '#f1f5f9',
+                  padding: '12px'
+                }}
+                labelFormatter={(date) => new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                itemStyle={{ fontSize: '13px', padding: '3px 0' }}
+                itemSorter={(item) => {
+                  const order = ['US AQI', 'PM2.5', 'PM10', 'CO', 'NO₂', 'SO₂', 'O₃', 'Dust', 'UV Index'];
+                  return order.indexOf(item.name);
+                }}
+              />
+              <Legend 
+                wrapperStyle={{ paddingTop: '20px' }}
+                iconType="line"
+                iconSize={20}
+              />
+              <Line
+                type="monotone"
+                dataKey="usAqi"
+                stroke="#8b5cf6"
+                strokeWidth={3}
+                name="US AQI"
+                dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#8b5cf6', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="pm25"
+                stroke="#10b981"
+                strokeWidth={3}
+                name="PM2.5"
+                dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#10b981', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="pm10"
+                stroke="#f59e0b"
+                strokeWidth={3}
+                name="PM10"
+                dot={{ fill: '#f59e0b', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#f59e0b', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="co"
+                stroke="#06b6d4"
+                strokeWidth={3}
+                name="CO"
+                dot={{ fill: '#06b6d4', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#06b6d4', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="no2"
+                stroke="#f97316"
+                strokeWidth={3}
+                name="NO₂"
+                dot={{ fill: '#f97316', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#f97316', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="so2"
+                stroke="#ef4444"
+                strokeWidth={3}
+                name="SO₂"
+                dot={{ fill: '#ef4444', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#ef4444', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="ozone"
+                stroke="#14b8a6"
+                strokeWidth={3}
+                name="O₃"
+                dot={{ fill: '#14b8a6', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#14b8a6', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="dust"
+                stroke="#a3a3a3"
+                strokeWidth={3}
+                name="Dust"
+                dot={{ fill: '#a3a3a3', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#a3a3a3', strokeWidth: 2 }}
               />
               <Line
                 type="monotone"
