@@ -1,11 +1,9 @@
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Fallback rule-based suggestions when OpenAI API fails
 function generateRuleBasedSuggestions(aqiValue, pm25, pm10, temperature, humidity, windSpeed, rain, waveHeight, seaTemp, currentVelocity) {
@@ -87,11 +85,24 @@ export const getSuggestions = async (req, res) => {
     let suggestions;
     let usingFallback = false;
 
-    // Try OpenAI first, fallback to rule-based if it fails
+    // Try Gemini first, fallback to rule-based if it fails
     try {
-      const prompt = `You are an environmental health advisor. Analyze the following environmental data and provide specific alerts and actionable suggestions if values are outside safe ranges. Focus on health impacts and practical recommendations.
+      const prompt = `You are an Environmental Conditions Alert Agent. Your primary function is to analyze real-time data on Air Quality Index (AQI), marine conditions, and weather, and provide relevant alerts and suggestions to users. Your responses should be clear, concise, and actionable.
 
-Environmental Data:
+Your responsibilities include:
+1. Interpreting AQI data and its health implications
+2. Analyzing marine conditions for safety and recreational purposes
+3. Assessing weather data to predict potential hazards or significant changes
+4. Generating appropriate alerts based on the severity of conditions
+5. Providing practical suggestions for users to respond to current environmental conditions
+
+When formulating your responses, consider:
+- The severity and urgency of the environmental conditions
+- Potential health impacts, especially for sensitive groups
+- Safety precautions for outdoor activities
+- Any necessary preparations or actions users should take
+
+Environmental Data to Analyze:
 - Air Quality Index (AQI): ${aqiValue !== null ? aqiValue : 'N/A'}
 - PM2.5: ${pm25 !== null ? pm25 + ' µg/m³' : 'N/A'}
 - PM10: ${pm10 !== null ? pm10 + ' µg/m³' : 'N/A'}
@@ -109,26 +120,24 @@ Safe Ranges Reference:
 - PM10: <54 µg/m³ (Good), 55-154 (Moderate), >155 (Unhealthy)
 - Temperature: 15-25°C (Comfortable), <10°C (Cold), >35°C (Heat Risk)
 - Wave Height: <2m (Safe), 2-4m (Moderate), >4m (Dangerous)
+- Rain: <10mm (Normal), >10mm (Heavy)
 
-IMPORTANT: Only provide alerts for unsafe conditions. If all values are within safe ranges, simply state that conditions are safe.
+IMPORTANT: Only generate alerts for conditions outside safe ranges. If all values are within safe ranges, provide a brief message confirming conditions are safe.
 
-Provide alerts only for values outside safe ranges with:
-1. Clear alert title indicating the unsafe condition
-2. Specific health impacts
-3. Actionable recommendations
+For each unsafe condition, provide:
+1. Alert severity and condition name
+2. Health impacts or safety concerns, especially for sensitive groups
+3. Clear, actionable suggestions and safety precautions
+4. Necessary preparations or actions users should take
 
-Keep responses concise and practical. Do not use emojis, asterisks, or dashes for formatting.`;
+Always strive to provide accurate, helpful, and timely information to keep users well-informed and safe. Keep responses concise and practical. Do not use emojis, asterisks, or dashes for formatting.`;
 
-      const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.7,
-        max_tokens: 500
-      });
-
-      suggestions = completion.choices[0].message.content;
-    } catch (openaiError) {
-      console.warn('OpenAI API failed, using rule-based suggestions:', openaiError.message);
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      suggestions = response.text();
+    } catch (geminiError) {
+      console.warn('Gemini API failed, using rule-based suggestions:', geminiError.message);
       suggestions = generateRuleBasedSuggestions(aqiValue, pm25, pm10, temperature, humidity, windSpeed, rain, waveHeight, seaTemp, currentVelocity);
       usingFallback = true;
     }
