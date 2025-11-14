@@ -23,6 +23,9 @@ export default function Sidebar({ isOpen = true, onToggle = () => {}, onNavigate
           <button className="navbutton" title="Forest Cover" onClick={() => onNavigate('analytics')}>
             Forest Cover
           </button>
+          <button className="navbutton" title="Glacier Insights" onClick={() => onNavigate('glacier')}>
+            Glacier Insights
+          </button>
         </div>
 
         <div className="nav-group">
