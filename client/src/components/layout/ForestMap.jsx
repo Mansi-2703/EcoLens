@@ -113,9 +113,9 @@ const ForestMap = () => {
         className="map-container"
         style={{
           width: "100%",
-          maxWidth: "1400px",
+          maxWidth: "1200px",
           height: "60vh",
-          marginBottom: "40px",
+          margin: "0 auto 40px",
           borderRadius: "12px",
           overflow: "hidden",
         }}
@@ -135,7 +135,7 @@ const ForestMap = () => {
           style={{
             width: "100%",
             maxWidth: "1200px",
-            marginBottom: "40px",
+            margin: "0 auto 40px",
             background: "rgba(30, 41, 59, 0.7)",
             padding: "20px",
             borderRadius: "12px",

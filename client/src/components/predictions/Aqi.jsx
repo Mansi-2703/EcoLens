@@ -28,6 +28,11 @@ export default function Aqi() {
   const [lonInput, setLonInput] = useState('');
   const gridRef = useRef(null);
 
+  // Past 3-month trends state
+  const [trendsData, setTrendsData] = useState([]);
+  const [trendsLoading, setTrendsLoading] = useState(false);
+  const [trendsError, setTrendsError] = useState(null);
+
   // Fetch location name using reverse geocoding with high granularity (matching Real-Time Monitor)
   useEffect(() => {
     const fetchLocationName = async () => {
@@ -133,6 +138,27 @@ export default function Aqi() {
     fetchAirQuality();
   }, [lat, lon, selectedDay]);
 
+  // Fetch 3-month trends data whenever lat/lon changes
+  useEffect(() => {
+    const fetchTrendsData = async () => {
+      setTrendsLoading(true);
+      try {
+        const response = await fetch(
+          `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=pm10,pm2_5,us_aqi&past_days=92&forecast_days=1`
+        );
+        if (!response.ok) throw new Error('Failed to fetch trends data');
+        const data = await response.json();
+        const processedTrends = processTrendsData(data);
+        setTrendsData(processedTrends);
+      } catch (err) {
+        setTrendsError(err.message);
+      } finally {
+        setTrendsLoading(false);
+      }
+    };
+    fetchTrendsData();
+  }, [lat, lon]);
+
   const processDailyAverages = (data) => {
     const { hourly } = data;
     const times = hourly.time;
@@ -173,6 +199,22 @@ export default function Aqi() {
       dust: values.dust.length > 0 ? (values.dust.reduce((a, b) => a + b, 0) / values.dust.length).toFixed(1) : 'N/A',
       uvIndex: (values.uvIndex.reduce((a, b) => a + b, 0) / values.uvIndex.length).toFixed(1),
     }));
+  };
+
+  const processTrendsData = (data) => {
+    const { hourly } = data;
+    const times = hourly.time;
+    const usAqi = hourly.us_aqi || [];
+    const pm25 = hourly.pm2_5;
+    const pm10 = hourly.pm10;
+
+    return times.map((time, index) => ({
+      time,
+      date: new Date(time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      pm10: pm10[index] || null,
+      pm25: pm25[index] || null,
+      usAqi: usAqi[index] || null,
+    })).sort((a, b) => new Date(a.time) - new Date(b.time)); // Ensure sorted by time
   };
 
   const getAirQualityStatus = (pm25) => {
@@ -645,8 +687,8 @@ export default function Aqi() {
                 stroke="#cbd5e1"
                 tick={{ fontSize: 12 }}
               />
-              <YAxis 
-                stroke="#cbd5e1" 
+              <YAxis
+                stroke="#cbd5e1"
                 tick={{ fontSize: 12 }}
                 label={{ value: 'Daily Average', angle: -90, position: 'insideLeft', style: { fill: '#cbd5e1', fontSize: 12 } }}
               />
@@ -665,7 +707,7 @@ export default function Aqi() {
                   return order.indexOf(item.name);
                 }}
               />
-              <Legend 
+              <Legend
                 wrapperStyle={{ paddingTop: '20px' }}
                 iconType="line"
                 iconSize={20}
@@ -755,6 +797,136 @@ export default function Aqi() {
           </ResponsiveContainer>
         </div>
       )}
+
+      {/* Past 3-Month AQI Trends */}
+      <div className="trends-section">
+        <h3 className="chart-title">Past 3-Month AQI Trends</h3>
+        {trendsLoading && <p>Loading trends...</p>}
+        {trendsError && <p>Error: {trendsError}</p>}
+        {trendsData.length > 0 && (
+          <>
+            {/* PM10 Trend */}
+            <div className="chart-container">
+              <h4 className="chart-subtitle">PM10 Trend</h4>
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={trendsData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
+                  <XAxis
+                    dataKey="date"
+                    tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    stroke="rgba(255,255,255,0.7)"
+                    tick={{ fontSize: 12 }}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis
+                    stroke="rgba(255,255,255,0.7)"
+                    tick={{ fontSize: 12 }}
+                    domain={[0, 'auto']}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'rgba(0,0,0,0.9)',
+                      border: '1px solid rgba(255,255,255,0.3)',
+                      borderRadius: '10px',
+                      color: '#fff',
+                      padding: '12px'
+                    }}
+                    labelFormatter={(date) => new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="pm10"
+                    stroke="#6ac3ff"
+                    strokeWidth={2}
+                    dot={false}
+                    connectNulls={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* PM2.5 Trend */}
+            <div className="chart-container">
+              <h4 className="chart-subtitle">PM2.5 Trend</h4>
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={trendsData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
+                  <XAxis
+                    dataKey="date"
+                    tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    stroke="rgba(255,255,255,0.7)"
+                    tick={{ fontSize: 12 }}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis
+                    stroke="rgba(255,255,255,0.7)"
+                    tick={{ fontSize: 12 }}
+                    domain={[0, 'auto']}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'rgba(0,0,0,0.9)',
+                      border: '1px solid rgba(255,255,255,0.3)',
+                      borderRadius: '10px',
+                      color: '#fff',
+                      padding: '12px'
+                    }}
+                    labelFormatter={(date) => new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="pm25"
+                    stroke="#9b7bff"
+                    strokeWidth={2}
+                    dot={false}
+                    connectNulls={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* US AQI Trend */}
+            <div className="chart-container">
+              <h4 className="chart-subtitle">US AQI Trend</h4>
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={trendsData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
+                  <XAxis
+                    dataKey="date"
+                    tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    stroke="rgba(255,255,255,0.7)"
+                    tick={{ fontSize: 12 }}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis
+                    stroke="rgba(255,255,255,0.7)"
+                    tick={{ fontSize: 12 }}
+                    domain={[0, 'auto']}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'rgba(0,0,0,0.9)',
+                      border: '1px solid rgba(255,255,255,0.3)',
+                      borderRadius: '10px',
+                      color: '#fff',
+                      padding: '12px'
+                    }}
+                    labelFormatter={(date) => new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="usAqi"
+                    stroke="#6fff9e"
+                    strokeWidth={2}
+                    dot={false}
+                    connectNulls={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </>
+        )}
+      </div>
 
       {/* Styles */}
       <style>{`
