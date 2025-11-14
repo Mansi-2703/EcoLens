@@ -7,8 +7,8 @@ const GlacierMap = () => {
   const map = useRef(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [glacierData, setGlacierData] = useState(null);
-  const [showGlaciers, setShowGlaciers] = useState(true);
   const [selectedRegion, setSelectedRegion] = useState('all');
+  const [marker, setMarker] = useState(null);
 
   // Free glacier data source (Natural Earth glaciers)
   const glacierGeoJSONUrl = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_glaciated_areas.geojson';
@@ -127,10 +127,6 @@ const GlacierMap = () => {
     fetch(glacierGeoJSONUrl)
       .then(response => response.json())
       .then(data => {
-        console.log('Glacier data loaded:', data);
-        if (data.features && data.features.length > 0) {
-          console.log('Sample feature properties:', data.features[0].properties);
-        }
         setGlacierData(data);
       })
       .catch(error => {
@@ -182,7 +178,7 @@ const GlacierMap = () => {
               10, '#60a5fa',
               '#60a5fa' // Default
             ],
-            'fill-opacity': showGlaciers ? 0.7 : 0
+            'fill-opacity': 0.7
           }
         });
       }
@@ -192,10 +188,10 @@ const GlacierMap = () => {
           id: 'glacier-outline',
           type: 'line',
           source: 'glaciers',
-          paint: {
+        paint: {
             'line-color': '#ffffff',
             'line-width': 1,
-            'line-opacity': showGlaciers ? 1 : 0
+            'line-opacity': 1
           }
         });
       }
@@ -224,24 +220,31 @@ const GlacierMap = () => {
         });
       }
     }
-  }, [mapLoaded, glacierData, showGlaciers]);
-
-  const toggleGlaciers = () => {
-    setShowGlaciers(!showGlaciers);
-  };
+  }, [mapLoaded, glacierData]);
 
   const filterByRegion = (region) => {
     setSelectedRegion(region);
     if (map.current && map.current.getLayer('glacier-fill')) {
+      // Remove existing marker
+      if (marker) {
+        marker.remove();
+        setMarker(null);
+      }
+
       let filter = null;
       if (region !== 'all') {
         // Simple region filtering based on longitude/latitude bounds
         const regionBounds = {
+          antarctica: { bounds: [-180, -90, 180, -60], center: [0, -75], zoom: 3 },
+          greenland: { bounds: [-75, 59, -10, 84], center: [-42, 71], zoom: 4 },
           arctic: { bounds: [-180, 60, 180, 90], center: [0, 75], zoom: 3 },
-          alps: { bounds: [5, 45, 15, 48], center: [10, 46.5], zoom: 7 },
           himalayas: { bounds: [70, 25, 95, 40], center: [82.5, 32.5], zoom: 6 },
           andes: { bounds: [-80, -55, -60, 10], center: [-70, -22.5], zoom: 4 },
-          alaska: { bounds: [-170, 55, -130, 70], center: [-150, 62.5], zoom: 5 }
+          alaska: { bounds: [-170, 55, -130, 70], center: [-150, 62.5], zoom: 5 },
+          alps: { bounds: [5, 45, 15, 48], center: [10, 46.5], zoom: 7 },
+          caucasus: { bounds: [40, 40, 50, 45], center: [45, 42.5], zoom: 7 },
+          newzealand: { bounds: [165, -47, 179, -34], center: [172, -40.5], zoom: 6 },
+          iceland: { bounds: [-25, 63, -13, 67], center: [-19, 65], zoom: 7 }
         };
         const regionData = regionBounds[region];
         if (regionData) {
@@ -261,6 +264,15 @@ const GlacierMap = () => {
             zoom: regionData.zoom,
             duration: 2000
           });
+
+          // Add pinpoint marker
+          const newMarker = new maplibregl.Marker({
+            color: '#ff0000',
+            scale: 1.2
+          })
+            .setLngLat(regionData.center)
+            .addTo(map.current);
+          setMarker(newMarker);
         }
       } else {
         // Reset to world view when 'all' is selected
@@ -289,16 +301,8 @@ const GlacierMap = () => {
         borderRadius: '8px',
         color: '#f1f5f9'
       }}>
-        <h3 style={{ margin: '0 0 10px 0', fontSize: '14px' }}>Glacier Layers</h3>
+        <h3 style={{ margin: '0 0 10px 0', fontSize: '14px' }}>Glaciers</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px' }}>
-            <input
-              type="checkbox"
-              checked={showGlaciers}
-              onChange={toggleGlaciers}
-            />
-            Show Glaciers
-          </label>
           <div>
             <label style={{ fontSize: '12px', marginBottom: '5px', display: 'block' }}>Region Filter:</label>
             <select
@@ -313,12 +317,17 @@ const GlacierMap = () => {
                 fontSize: '12px'
               }}
             >
-              <option value="all">All Regions</option>
-              <option value="arctic">Arctic</option>
-              <option value="alps">Alps</option>
-              <option value="himalayas">Himalayas</option>
-              <option value="andes">Andes</option>
-              <option value="alaska">Alaska</option>
+              <option value="all">Major Glacier & Ice Reserve Regions on Earth</option>
+              <option value="antarctica">1. Antarctica – The Largest Ice Reserve</option>
+              <option value="greenland">2. Greenland – Second Largest Ice Sheet</option>
+              <option value="arctic">3. Arctic/High Arctic Islands</option>
+              <option value="himalayas">4. The Himalayas + Tibetan Plateau</option>
+              <option value="andes">5. Andes Mountains</option>
+              <option value="alaska">6. Alaska</option>
+              <option value="alps">7. The Alps</option>
+              <option value="caucasus">8. Caucasus Mountains</option>
+              <option value="newzealand">9. New Zealand – Southern Alps</option>
+              <option value="iceland">10. Iceland</option>
             </select>
           </div>
         </div>

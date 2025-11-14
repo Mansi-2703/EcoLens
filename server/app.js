@@ -6,6 +6,7 @@ import aiRoutes from "./routes/aiRoutes.js";
 import climateRoutes from "./routes/climateRoutes.js";
 import marineRoutes from "./routes/marineRoutes.js";
 import geoRoutes from "./routes/geoRoutes.js";
+import glacierRoutes from "./routes/glacierRoutes.js";
 
 const app = express();
 app.use(cors());
@@ -13,9 +14,10 @@ app.use(express.json());
 
 app.use("/api/weather", weatherRoutes);
 app.use("/api/aqi", aqiRoutes);
-app.use("/api/ai", aiRoutes);
+app.use("/api/ai", aqiRoutes);
 app.use("/api/climate", climateRoutes);
 app.use("/api/marine", marineRoutes);
 app.use("/api/geo", geoRoutes);
+app.use("/api/glacier", glacierRoutes);
 
 export default app;

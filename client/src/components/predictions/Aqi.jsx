@@ -14,10 +14,11 @@ L.Icon.Default.mergeOptions({
 
 export default function Aqi() {
   const [forecast, setForecast] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lat, setLat] = useState(40.7128); // Default New York
   const [lon, setLon] = useState(-74.0060);
+  const [initialLoad, setInitialLoad] = useState(true);
 
   // Get user's current location on component mount
   useEffect(() => {
@@ -31,7 +32,7 @@ export default function Aqi() {
           console.warn('Geolocation error:', error.message);
           // Keep default location if geolocation fails
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+        { enableHighAccuracy: false, timeout: 3000, maximumAge: 300000 }
       );
     } else {
       console.warn('Geolocation is not supported by this browser');
@@ -53,131 +54,123 @@ export default function Aqi() {
   const [trendsError, setTrendsError] = useState(null);
   const [selectedMetric, setSelectedMetric] = useState('usAqi'); // 'usAqi', 'pm25', or 'pm10'
 
-  // Fetch location name using reverse geocoding with high granularity (matching Real-Time Monitor)
+  // Fetch all data in parallel whenever lat/lon changes
   useEffect(() => {
-    const fetchLocationName = async () => {
+    const fetchAllData = async () => {
+      if (initialLoad) setLoading(true);
+      
       try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`
-        );
-        if (!response.ok) {
-          throw new Error('Failed to fetch location name');
-        }
-        const data = await response.json();
-        
-        // Build precise location string from address components (matching Header.jsx)
-        let locationParts = [];
-        
-        if (data.address) {
-          const addr = data.address;
+        // Fetch all data in parallel
+        const [locationResponse, aqiResponse, trendsResponse] = await Promise.all([
+          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`),
+          fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=us_aqi,pm2_5,pm10,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone,dust,uv_index&forecast_days=5&timezone=auto`),
+          fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=pm10,pm2_5,us_aqi&past_days=92&forecast_days=1`)
+        ]);
+
+        // Process location name
+        if (locationResponse.ok) {
+          const locationData = await locationResponse.json();
+          let locationParts = [];
           
-          // Add specific place name (building, attraction, etc.)
-          if (addr.tourism) locationParts.push(addr.tourism);
-          else if (addr.amenity) locationParts.push(addr.amenity);
-          else if (addr.building) locationParts.push(addr.building);
-          else if (addr.shop) locationParts.push(addr.shop);
-          else if (addr.office) locationParts.push(addr.office);
+          if (locationData.address) {
+            const addr = locationData.address;
+            
+            // Add specific place name (building, attraction, etc.)
+            if (addr.tourism) locationParts.push(addr.tourism);
+            else if (addr.amenity) locationParts.push(addr.amenity);
+            else if (addr.building) locationParts.push(addr.building);
+            else if (addr.shop) locationParts.push(addr.shop);
+            else if (addr.office) locationParts.push(addr.office);
+            
+            // Add road/street
+            if (addr.road) locationParts.push(addr.road);
+            else if (addr.pedestrian) locationParts.push(addr.pedestrian);
+            
+            // Add neighborhood/suburb
+            if (addr.neighbourhood) locationParts.push(addr.neighbourhood);
+            else if (addr.suburb) locationParts.push(addr.suburb);
+            else if (addr.quarter) locationParts.push(addr.quarter);
+            
+            // Add city/town
+            if (addr.city) locationParts.push(addr.city);
+            else if (addr.town) locationParts.push(addr.town);
+            else if (addr.village) locationParts.push(addr.village);
+            else if (addr.municipality) locationParts.push(addr.municipality);
+            
+            // Add state/region
+            if (addr.state) locationParts.push(addr.state);
+            
+            // Add country
+            if (addr.country) locationParts.push(addr.country);
+          }
           
-          // Add road/street
-          if (addr.road) locationParts.push(addr.road);
-          else if (addr.pedestrian) locationParts.push(addr.pedestrian);
-          
-          // Add neighborhood/suburb
-          if (addr.neighbourhood) locationParts.push(addr.neighbourhood);
-          else if (addr.suburb) locationParts.push(addr.suburb);
-          else if (addr.quarter) locationParts.push(addr.quarter);
-          
-          // Add city/town
-          if (addr.city) locationParts.push(addr.city);
-          else if (addr.town) locationParts.push(addr.town);
-          else if (addr.village) locationParts.push(addr.village);
-          else if (addr.municipality) locationParts.push(addr.municipality);
-          
-          // Add state/region
-          if (addr.state) locationParts.push(addr.state);
-          
-          // Add country
-          if (addr.country) locationParts.push(addr.country);
-        }
-        
-        // Format location name
-        if (locationParts.length > 0) {
-          const address = locationParts.slice(0, 4).join(', ');
-          setLocationName(`📍 ${address} (Lat: ${lat.toFixed(3)}, Lng: ${lon.toFixed(3)})`);
-        } else if (data.display_name) {
-          const parts = data.display_name.split(',').slice(0, 3);
-          setLocationName(`📍 ${parts.join(',')} (Lat: ${lat.toFixed(3)}, Lng: ${lon.toFixed(3)})`);
+          // Format location name
+          if (locationParts.length > 0) {
+            const address = locationParts.slice(0, 4).join(', ');
+            setLocationName(`📍 ${address} (Lat: ${lat.toFixed(3)}, Lng: ${lon.toFixed(3)})`);
+          } else if (locationData.display_name) {
+            const parts = locationData.display_name.split(',').slice(0, 3);
+            setLocationName(`📍 ${parts.join(',')} (Lat: ${lat.toFixed(3)}, Lng: ${lon.toFixed(3)})`);
+          } else {
+            setLocationName(`📍 Lat ${lat.toFixed(3)}, Lon ${lon.toFixed(3)}`);
+          }
         } else {
           setLocationName(`📍 Lat ${lat.toFixed(3)}, Lon ${lon.toFixed(3)}`);
         }
-      } catch (err) {
-        console.error('Reverse geocoding error:', err);
-        setLocationName(`📍 Lat ${lat.toFixed(3)}, Lon ${lon.toFixed(3)}`);
-      }
-    };
-    fetchLocationName();
-  }, [lat, lon]);
 
-  // Fetch AQI data whenever lat/lon changes
-  useEffect(() => {
-    const fetchAirQuality = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(
-          `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=us_aqi,pm2_5,pm10,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone,dust,uv_index&forecast_days=5&timezone=auto`
-        );
-        if (!response.ok) throw new Error('Failed to fetch air quality data');
-        const data = await response.json();
-        const dailyForecasts = processDailyAverages(data);
-        setForecast(dailyForecasts);
-        // Process hourly data
-        const hourly = data.hourly;
-        const processedHourly = hourly.time.map((time, index) => ({
-          time,
-          usAqi: hourly.us_aqi?.[index],
-          pm25: hourly.pm2_5[index],
-          pm10: hourly.pm10[index],
-          co: hourly.carbon_monoxide?.[index],
-          no2: hourly.nitrogen_dioxide?.[index],
-          so2: hourly.sulphur_dioxide[index],
-          ozone: hourly.ozone?.[index],
-          dust: hourly.dust?.[index],
-          uvIndex: hourly.uv_index[index],
-        }));
-        setHourlyData(processedHourly);
-        // Set selected day to first day if not set
-        if (!selectedDay && dailyForecasts.length > 0) {
-          setSelectedDay(dailyForecasts[0].date);
+        // Process AQI data
+        if (aqiResponse.ok) {
+          const aqiData = await aqiResponse.json();
+          const dailyForecasts = processDailyAverages(aqiData);
+          setForecast(dailyForecasts);
+          
+          // Process hourly data
+          const hourly = aqiData.hourly;
+          const processedHourly = hourly.time.map((time, index) => ({
+            time,
+            usAqi: hourly.us_aqi?.[index],
+            pm25: hourly.pm2_5[index],
+            pm10: hourly.pm10[index],
+            co: hourly.carbon_monoxide?.[index],
+            no2: hourly.nitrogen_dioxide?.[index],
+            so2: hourly.sulphur_dioxide[index],
+            ozone: hourly.ozone?.[index],
+            dust: hourly.dust?.[index],
+            uvIndex: hourly.uv_index[index],
+          }));
+          setHourlyData(processedHourly);
+          
+          // Set selected day to first day if not set
+          if (!selectedDay && dailyForecasts.length > 0) {
+            setSelectedDay(dailyForecasts[0].date);
+          }
+        } else {
+          throw new Error('Failed to fetch air quality data');
         }
+
+        // Process trends data
+        if (trendsResponse.ok) {
+          const trendsDataResponse = await trendsResponse.json();
+          const processedTrends = processTrendsData(trendsDataResponse);
+          setTrendsData(processedTrends);
+          setTrendsError(null);
+        } else {
+          setTrendsError('Failed to fetch trends data');
+        }
+
+        setError(null);
       } catch (err) {
+        console.error('Error fetching data:', err);
         setError(err.message);
       } finally {
         setLoading(false);
-      }
-    };
-    fetchAirQuality();
-  }, [lat, lon, selectedDay]);
-
-  // Fetch 3-month trends data whenever lat/lon changes
-  useEffect(() => {
-    const fetchTrendsData = async () => {
-      setTrendsLoading(true);
-      try {
-        const response = await fetch(
-          `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=pm10,pm2_5,us_aqi&past_days=92&forecast_days=1`
-        );
-        if (!response.ok) throw new Error('Failed to fetch trends data');
-        const data = await response.json();
-        const processedTrends = processTrendsData(data);
-        setTrendsData(processedTrends);
-      } catch (err) {
-        setTrendsError(err.message);
-      } finally {
         setTrendsLoading(false);
+        if (initialLoad) setInitialLoad(false);
       }
     };
-    fetchTrendsData();
-  }, [lat, lon]);
+    
+    fetchAllData();
+  }, [lat, lon, selectedDay, initialLoad]);
 
   const processDailyAverages = (data) => {
     const { hourly } = data;
