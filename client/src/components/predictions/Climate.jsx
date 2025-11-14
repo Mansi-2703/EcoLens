@@ -26,6 +26,10 @@ export default function Climate({ lat, lon }) {
   const [selectedDay, setSelectedDay] = useState(null);
   const [forecast, setForecast] = useState([]);
   const gridRef = useRef(null);
+  
+  // Global warming trend data
+  const [temperatureTrends, setTemperatureTrends] = useState([]);
+  const [trendsLoading, setTrendsLoading] = useState(false);
 
   // Get user's current location on component mount
   useEffect(() => {
@@ -150,6 +154,58 @@ export default function Climate({ lat, lon }) {
     fetchClimateData();
   }, [selectedLocation.lat, selectedLocation.lng, selectedDay]);
 
+  // Fetch past 5 years temperature data for global warming trends
+  useEffect(() => {
+    const fetchTemperatureTrends = async () => {
+      setTrendsLoading(true);
+      try {
+        const response = await fetch(
+          `https://archive-api.open-meteo.com/v1/archive?latitude=${selectedLocation.lat}&longitude=${selectedLocation.lng}&start_date=2019-01-01&end_date=2024-12-31&daily=temperature_2m_mean&timezone=auto`
+        );
+        if (!response.ok) throw new Error('Failed to fetch temperature trends');
+        const data = await response.json();
+        
+        // Process yearly averages
+        const yearlyData = processYearlyAverages(data);
+        setTemperatureTrends(yearlyData);
+      } catch (err) {
+        console.error('Temperature trends error:', err);
+      } finally {
+        setTrendsLoading(false);
+      }
+    };
+    fetchTemperatureTrends();
+  }, [selectedLocation.lat, selectedLocation.lng]);
+
+  const processYearlyAverages = (data) => {
+    const { daily } = data;
+    const dates = daily.time;
+    const temps = daily.temperature_2m_mean;
+    
+    const yearlyData = {};
+    dates.forEach((date, index) => {
+      const year = date.split('-')[0];
+      if (!yearlyData[year]) {
+        yearlyData[year] = { temps: [], year };
+      }
+      if (temps[index] !== null) {
+        yearlyData[year].temps.push(temps[index]);
+      }
+    });
+
+    return Object.values(yearlyData).map(item => ({
+      year: item.year,
+      avgTemp: (item.temps.reduce((a, b) => a + b, 0) / item.temps.length).toFixed(2),
+      anomaly: null // Will be calculated relative to baseline
+    })).map((item, index, arr) => {
+      // Calculate anomaly relative to first year (baseline)
+      const baseline = parseFloat(arr[0].avgTemp);
+      return {
+        ...item,
+        anomaly: (parseFloat(item.avgTemp) - baseline).toFixed(2)
+      };
+    });
+  };
 
 
   const processDailyAverages = (data) => {
@@ -645,6 +701,81 @@ export default function Climate({ lat, lon }) {
               />
             </LineChart>
           </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Global Warming Effects on Weather */}
+      {temperatureTrends.length > 0 && (
+        <div className="chart-container">
+          <h3 className="chart-title">Global Warming Effects on Climate Conditions</h3>
+          <p style={{ color: '#94a3b8', textAlign: 'center', marginBottom: '20px', fontSize: '14px' }}>
+            Temperature trends over the past 5 years showing warming patterns at this location
+          </p>
+          {trendsLoading ? (
+            <p style={{ color: '#94a3b8', textAlign: 'center' }}>Loading temperature trends...</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={400}>
+              <BarChart data={temperatureTrends} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" opacity={0.3} />
+                <XAxis
+                  dataKey="year"
+                  stroke="#cbd5e1"
+                  tick={{ fontSize: 12 }}
+                  label={{ value: 'Year', position: 'insideBottom', offset: -10, style: { fill: '#cbd5e1', fontSize: 12 } }}
+                />
+                <YAxis
+                  stroke="#cbd5e1"
+                  tick={{ fontSize: 12 }}
+                  label={{ value: 'Temperature Anomaly (°C)', angle: -90, position: 'insideLeft', style: { fill: '#cbd5e1', fontSize: 12 } }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                    border: '1px solid rgba(148, 163, 184, 0.5)',
+                    borderRadius: '10px',
+                    color: '#f1f5f9',
+                    padding: '12px'
+                  }}
+                  labelFormatter={(year) => `Year ${year}`}
+                  formatter={(value, name) => {
+                    if (name === 'anomaly') {
+                      return [`${value}°C ${parseFloat(value) > 0 ? '↑' : parseFloat(value) < 0 ? '↓' : ''}`, 'Temperature Anomaly'];
+                    }
+                    return [`${value}°C`, 'Avg Temperature'];
+                  }}
+                />
+                <Legend 
+                  wrapperStyle={{ paddingTop: '20px' }}
+                  iconType="rect"
+                />
+                <Bar 
+                  dataKey="avgTemp" 
+                  fill="#3b82f6" 
+                  name="Average Temperature"
+                  radius={[8, 8, 0, 0]}
+                />
+                <Bar 
+                  dataKey="anomaly" 
+                  fill="#ef4444" 
+                  name="Temperature Anomaly"
+                  radius={[8, 8, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+          <div style={{ 
+            marginTop: '20px', 
+            padding: '16px', 
+            background: 'rgba(239, 68, 68, 0.1)', 
+            borderLeft: '4px solid #ef4444', 
+            borderRadius: '8px' 
+          }}>
+            <p style={{ color: '#f1f5f9', margin: 0, fontSize: '14px', lineHeight: '1.6' }}>
+              <strong style={{ color: '#ef4444' }}>⚠️ Climate Impact:</strong> Temperature anomalies show deviation from the baseline year (2019). 
+              Positive anomalies indicate warming trends, which can lead to extreme weather events, altered precipitation patterns, 
+              and disrupted ecosystems.
+            </p>
+          </div>
         </div>
       )}
 
