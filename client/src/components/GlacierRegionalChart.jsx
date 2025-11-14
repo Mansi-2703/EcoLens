@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -10,7 +10,6 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
-import { getGlacierMeltData, getRegionalGlacierData } from '../services/glacierService';
 
 ChartJS.register(
   CategoryScale,
@@ -22,51 +21,10 @@ ChartJS.register(
   Legend
 );
 
-const GlacierRegionalChart = () => {
-  const [globalData, setGlobalData] = useState(null);
-  const [regionalData, setRegionalData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch global data
-        const global = await getGlacierMeltData();
-
-        // Fetch regional data
-        const regional = await getRegionalGlacierData();
-
-        setGlobalData(global);
-        setRegionalData(regional);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
-
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
-        <div>Loading regional comparison data...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px', color: 'red' }}>
-        Error loading data: {error}
-      </div>
-    );
-  }
-
+const GlacierRegionalChart = ({ globalData, regionalData }) => {
   if (!globalData || !regionalData) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
         No data available
       </div>
     );
@@ -179,15 +137,20 @@ const GlacierRegionalChart = () => {
   };
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ height: '300px', position: 'relative' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div style={{ height: '280px', position: 'relative' }}>
         <Line data={chartData} options={options} />
-        <div style={{ marginTop: '10px', fontSize: '12px', color: '#94a3b8', textAlign: 'center' }}>
-          Comparing global trends with regional glacier data from WGMS
-        </div>
+      </div>
+      <div style={{ 
+        fontSize: '12px', 
+        color: '#94a3b8', 
+        textAlign: 'center',
+        padding: '10px 0',
+        borderBottom: '1px solid rgba(148, 163, 184, 0.2)'
+      }}>
+        Comparing global trends with regional glacier data from WGMS
       </div>
       <div style={{
-        marginTop: '15px',
         padding: '15px',
         background: 'rgba(15, 23, 42, 0.5)',
         borderRadius: '8px',

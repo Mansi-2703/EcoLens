@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -10,7 +10,6 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
-import { getGlacierMeltData } from '../services/glacierService';
 
 ChartJS.register(
   CategoryScale,
@@ -22,51 +21,17 @@ ChartJS.register(
   Legend
 );
 
-const GlacierTurningPointsChart = () => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const meltData = await getGlacierMeltData();
-        setData(meltData);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
-
-  if (loading) {
+const GlacierTurningPointsChart = ({ globalData }) => {
+  if (!globalData || globalData.length === 0) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
-        <div>Loading turning points data...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px', color: 'red' }}>
-        Error loading data: {error}
-      </div>
-    );
-  }
-
-  if (!data || data.length === 0) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
         No data available
       </div>
     );
   }
 
   // Calculate turning points
-  const massBalances = data.map(d => d.massBalance);
+  const massBalances = globalData.map(d => d.massBalance);
   const minIndex = massBalances.indexOf(Math.min(...massBalances));
   const maxIndex = massBalances.indexOf(Math.max(...massBalances));
 
@@ -91,11 +56,11 @@ const GlacierTurningPointsChart = () => {
   const gainIndex = gains.length > 0 ? gains[Math.floor(gains.length / 2)] : null;
 
   const chartData = {
-    labels: data.map(d => d.year),
+    labels: globalData.map(d => d.year),
     datasets: [
       {
         label: 'Mass Balance Anomaly (m w.e.)',
-        data: data.map(d => d.massBalance),
+        data: globalData.map(d => d.massBalance),
         borderColor: '#ef4444',
         backgroundColor: 'rgba(239, 68, 68, 0.1)',
         fill: false,
@@ -191,20 +156,25 @@ const GlacierTurningPointsChart = () => {
   };
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ height: '300px', position: 'relative' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div style={{ height: '280px', position: 'relative' }}>
         <Line data={chartData} options={options} />
-        <div style={{ marginTop: '10px', fontSize: '12px', color: '#94a3b8', textAlign: 'center' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
-            <span style={{ color: '#dc2626' }}>● Maximum Loss ({data[minIndex]?.year})</span>
-            <span style={{ color: '#16a34a' }}>● Maximum Gain ({data[maxIndex]?.year})</span>
-            <span style={{ color: '#ea580c' }}>● Steepest Decline ({data[steepestDeclineIndex]?.year})</span>
-            {gainIndex && <span style={{ color: '#16a34a' }}>● Temporary Gain ({data[gainIndex]?.year})</span>}
-          </div>
+      </div>
+      <div style={{ 
+        fontSize: '12px', 
+        color: '#94a3b8', 
+        textAlign: 'center',
+        padding: '10px 0',
+        borderBottom: '1px solid rgba(148, 163, 184, 0.2)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
+          <span style={{ color: '#dc2626' }}>● Maximum Loss ({globalData[minIndex]?.year})</span>
+          <span style={{ color: '#16a34a' }}>● Maximum Gain ({globalData[maxIndex]?.year})</span>
+          <span style={{ color: '#ea580c' }}>● Steepest Decline ({globalData[steepestDeclineIndex]?.year})</span>
+          {gainIndex && <span style={{ color: '#16a34a' }}>● Temporary Gain ({globalData[gainIndex]?.year})</span>}
         </div>
       </div>
       <div style={{
-        marginTop: '15px',
         padding: '15px',
         background: 'rgba(15, 23, 42, 0.5)',
         borderRadius: '8px',
@@ -214,9 +184,9 @@ const GlacierTurningPointsChart = () => {
       }}>
         <h4 style={{ margin: '0 0 10px 0', color: '#f1f5f9', fontSize: '14px' }}>Key Insights:</h4>
         <ul style={{ margin: 0, paddingLeft: '20px', color: '#94a3b8', fontSize: '13px', lineHeight: '1.5' }}>
-          <li>The highlighted points show critical moments in glacier mass balance history, with the maximum loss occurring in {data[minIndex]?.year}.</li>
-          <li>The steepest decline period around {data[steepestDeclineIndex]?.year} indicates accelerated ice melt during that timeframe.</li>
-          <li>Temporary gains, like in {data[gainIndex]?.year}, show brief recovery periods but don't reverse the overall downward trend.</li>
+          <li>The highlighted points show critical moments in glacier mass balance history, with the maximum loss occurring in {globalData[minIndex]?.year}.</li>
+          <li>The steepest decline period around {globalData[steepestDeclineIndex]?.year} indicates accelerated ice melt during that timeframe.</li>
+          <li>Temporary gains, like in {globalData[gainIndex]?.year}, show brief recovery periods but don't reverse the overall downward trend.</li>
           <li>These turning points correlate with major climate events and policy changes affecting global temperatures.</li>
         </ul>
       </div>

@@ -1,11 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import GlacierMap from './GlacierMap';
 import GlacierCumulativeChart from './GlacierCumulativeChart';
 import GlacierTurningPointsChart from './GlacierTurningPointsChart';
 import GlacierRegionalChart from './GlacierRegionalChart';
+import { getGlacierMeltData, getRegionalGlacierData } from '../services/glacierService';
 
 const GlacierInsights = () => {
   const [selectedChart, setSelectedChart] = useState('cumulative');
+  const [globalData, setGlobalData] = useState(null);
+  const [regionalData, setRegionalData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchAllData = async () => {
+      try {
+        setLoading(true);
+        const [global, regional] = await Promise.all([
+          getGlacierMeltData(),
+          getRegionalGlacierData()
+        ]);
+        setGlobalData(global);
+        setRegionalData(regional);
+        setError(null);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAllData();
+  }, []);
 
   const chartOptions = [
     { id: 'cumulative', label: 'Cumulative Mass Loss', component: GlacierCumulativeChart },
@@ -101,7 +126,36 @@ const GlacierInsights = () => {
           width: "100%",
           overflow: "hidden"
         }}>
-          {SelectedChartComponent && <SelectedChartComponent />}
+          {loading ? (
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              height: '100%',
+              fontSize: '16px',
+              color: '#94a3b8'
+            }}>
+              Loading glacier data...
+            </div>
+          ) : error ? (
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              height: '100%',
+              fontSize: '16px',
+              color: '#ef4444'
+            }}>
+              Error loading data: {error}
+            </div>
+          ) : (
+            SelectedChartComponent && (
+              <SelectedChartComponent 
+                globalData={globalData} 
+                regionalData={regionalData} 
+              />
+            )
+          )}
         </div>
       </div>
     </div>

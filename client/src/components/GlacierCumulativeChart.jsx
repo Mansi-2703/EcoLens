@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -10,7 +10,6 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
-import { getGlacierMeltData } from '../services/glacierService';
 
 ChartJS.register(
   CategoryScale,
@@ -22,55 +21,21 @@ ChartJS.register(
   Legend
 );
 
-const GlacierCumulativeChart = () => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const meltData = await getGlacierMeltData();
-        setData(meltData);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
-
-  if (loading) {
+const GlacierCumulativeChart = ({ globalData }) => {
+  if (!globalData || globalData.length === 0) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
-        <div>Loading cumulative glacier data...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px', color: 'red' }}>
-        Error loading data: {error}
-      </div>
-    );
-  }
-
-  if (!data || data.length === 0) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
         No data available
       </div>
     );
   }
 
   const chartData = {
-    labels: data.map(d => d.year),
+    labels: globalData.map(d => d.year),
     datasets: [
       {
         label: 'Cumulative Mass Balance Anomaly (m w.e.)',
-        data: data.map(d => d.massBalance),
+        data: globalData.map(d => d.massBalance),
         borderColor: '#ef4444',
         backgroundColor: 'rgba(239, 68, 68, 0.1)',
         fill: true,
