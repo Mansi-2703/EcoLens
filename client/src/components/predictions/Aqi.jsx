@@ -241,11 +241,15 @@ export default function Aqi() {
 
   return (
     <div className="aqi-page">
-      {/* Header */}
-      <div className="aqi-header">
-        <h2>Air Quality Predictions</h2>
-        <p className="aqi-subtitle">{locationName}</p>
-      </div>
+      {/* Header Bar */}
+      <header className="aqi-header-bar">
+        <div className="header-content">
+          <div className="title-section">
+            <h2 className="gradient-text">Air Quality Predictions</h2>
+            <p className="coords">{locationName}</p>
+          </div>
+        </div>
+      </header>
 
       {/* 2D Map */}
       <div className="map-container">
@@ -764,8 +768,69 @@ export default function Aqi() {
           align-items: center;
           background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
           color: #f1f5f9;
-          padding: 40px 20px;
+          padding: 0;
           min-height: 100vh;
+        }
+
+        .aqi-header-bar {
+          position: sticky;
+          top: 0;
+          z-index: 999;
+          width: 100%;
+          display: flex;
+          justify-content: center;
+          background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          padding: 20px 20px;
+          margin-bottom: 32px;
+          backdrop-filter: blur(10px);
+          min-height: 100px;
+        }
+
+        .header-content {
+          width: 100%;
+          max-width: 1400px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+
+        .logo-section {
+          display: flex;
+          align-items: center;
+          margin-left: 20px;
+        }
+
+        .header-logo {
+          height: 80px;
+          width: auto;
+        }
+
+        .title-section {
+          flex: 1;
+          text-align: center;
+        }
+
+        .gradient-text {
+          margin: 0;
+          font-size: 1.5rem;
+          background: linear-gradient(270deg, #00f5a0 0%, #00c6ff 50%, #00e0b8 100%);
+          background-size: 600% 600%;
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: gradientShift 8s ease infinite;
+        }
+
+        @keyframes gradientShift {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+
+        .coords {
+          font-size: 0.95rem;
+          color: #94a3b8;
+          margin: 5px 0 0 0;
         }
 
         .aqi-header {
@@ -794,7 +859,7 @@ export default function Aqi() {
         .map-container {
           width: 100%;
           max-width: 1400px;
-          margin-bottom: 40px;
+          margin: 0 20px 40px 20px;
           position: relative;
         }
 
