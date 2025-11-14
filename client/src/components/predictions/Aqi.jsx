@@ -18,6 +18,25 @@ export default function Aqi() {
   const [error, setError] = useState(null);
   const [lat, setLat] = useState(40.7128); // Default New York
   const [lon, setLon] = useState(-74.0060);
+
+  // Get user's current location on component mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLat(position.coords.latitude);
+          setLon(position.coords.longitude);
+        },
+        (error) => {
+          console.warn('Geolocation error:', error.message);
+          // Keep default location if geolocation fails
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+      );
+    } else {
+      console.warn('Geolocation is not supported by this browser');
+    }
+  }, []);
   const [mapType, setMapType] = useState('street'); // 'street' or 'satellite'
   const [selectedDay, setSelectedDay] = useState(null);
   const [hourlyData, setHourlyData] = useState([]);

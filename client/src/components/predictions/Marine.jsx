@@ -18,6 +18,25 @@ export default function Marine() {
   const [error, setError] = useState(null);
   const [lat, setLat] = useState(25.7617); // Default Miami coast
   const [lon, setLon] = useState(-80.1918);
+
+  // Get user's current location on component mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLat(position.coords.latitude);
+          setLon(position.coords.longitude);
+        },
+        (error) => {
+          console.warn('Geolocation error:', error.message);
+          // Keep default location if geolocation fails
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+      );
+    } else {
+      console.warn('Geolocation is not supported by this browser');
+    }
+  }, []);
   const [mapType, setMapType] = useState('street');
   const [selectedDay, setSelectedDay] = useState(null);
   const [hourlyData, setHourlyData] = useState([]);

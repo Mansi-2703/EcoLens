@@ -27,6 +27,24 @@ export default function Climate({ lat, lon }) {
   const [forecast, setForecast] = useState([]);
   const gridRef = useRef(null);
 
+  // Get user's current location on component mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setSelectedLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+        },
+        (error) => {
+          console.warn('Geolocation error:', error.message);
+          // Keep default location if geolocation fails
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+      );
+    } else {
+      console.warn('Geolocation is not supported by this browser');
+    }
+  }, []);
+
   // Fetch location name using reverse geocoding with high granularity
   useEffect(() => {
     const fetchLocationName = async () => {
