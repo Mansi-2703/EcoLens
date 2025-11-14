@@ -1,4 +1,10 @@
-# TODO: Add Glacier Insights Button to Sidebar
+# Glacier Insights Map Implementation TODO
 
-- [x] Edit client/src/components/layout/Sidebar.jsx: Add "Glacier Insights" button below "Forest Cover" in Realtime Analysis group, calling onNavigate('glacier')
-- [x] Edit client/src/app.jsx: Add header for 'glacier' page and render <GlacierInsights /> when activePage === 'glacier'
+- [x] Create GlacierMap.jsx component based on MapLibreMap, defaulting to satellite view
+- [x] Integrate free glacier GeoJSON data from public source (e.g., Natural Earth glaciers)
+- [x] Add map layers: polygon fills for glacier coverage (colored by loss rate), outlines, and text labels for glacier names
+- [x] Implement filters/layers: toggle controls for satellite view, glacier layers, and region-based filtering
+- [x] Update GlacierInsights.jsx to integrate the GlacierMap component
+- [x] Test map rendering and data loading (dev server started successfully)
+- [x] Verify compatibility with free APIs (using Natural Earth public dataset)
+- [x] Add region zoom functionality when filter is applied
