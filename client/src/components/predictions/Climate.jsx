@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -13,13 +13,84 @@ L.Icon.Default.mergeOptions({
 });
 
 export default function Climate({ lat, lon }) {
-  const [currentData, setCurrentData] = useState({});
   const [hourlyData, setHourlyData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState({ lat: 19.0760, lng: 72.8777 });
   const [mapType, setMapType] = useState('street'); // 'street' or 'satellite'
+  const [locationName, setLocationName] = useState('Click on the map to choose location');
+  const [searchType, setSearchType] = useState('location'); // 'location' or 'coordinates'
+  const [searchInput, setSearchInput] = useState('');
+  const [latInput, setLatInput] = useState('');
+  const [lonInput, setLonInput] = useState('');
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [forecast, setForecast] = useState([]);
   const gridRef = useRef(null);
+
+  // Fetch location name using reverse geocoding with high granularity
+  useEffect(() => {
+    const fetchLocationName = async () => {
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${selectedLocation.lat}&lon=${selectedLocation.lng}&zoom=18&addressdetails=1`
+        );
+        if (!response.ok) {
+          throw new Error('Failed to fetch location name');
+        }
+        const data = await response.json();
+        
+        // Build precise location string from address components
+        let locationParts = [];
+        
+        if (data.address) {
+          const addr = data.address;
+          
+          // Add specific place name (building, attraction, etc.)
+          if (addr.tourism) locationParts.push(addr.tourism);
+          else if (addr.amenity) locationParts.push(addr.amenity);
+          else if (addr.building) locationParts.push(addr.building);
+          else if (addr.shop) locationParts.push(addr.shop);
+          else if (addr.office) locationParts.push(addr.office);
+          
+          // Add road/street
+          if (addr.road) locationParts.push(addr.road);
+          else if (addr.pedestrian) locationParts.push(addr.pedestrian);
+          
+          // Add neighborhood/suburb
+          if (addr.neighbourhood) locationParts.push(addr.neighbourhood);
+          else if (addr.suburb) locationParts.push(addr.suburb);
+          else if (addr.quarter) locationParts.push(addr.quarter);
+          
+          // Add city/town
+          if (addr.city) locationParts.push(addr.city);
+          else if (addr.town) locationParts.push(addr.town);
+          else if (addr.village) locationParts.push(addr.village);
+          else if (addr.municipality) locationParts.push(addr.municipality);
+          
+          // Add state/region
+          if (addr.state) locationParts.push(addr.state);
+          
+          // Add country
+          if (addr.country) locationParts.push(addr.country);
+        }
+        
+        // Format location name
+        if (locationParts.length > 0) {
+          const address = locationParts.slice(0, 4).join(', ');
+          setLocationName(`📍 ${address} (Lat: ${selectedLocation.lat.toFixed(3)}, Lng: ${selectedLocation.lng.toFixed(3)})`);
+        } else if (data.display_name) {
+          const parts = data.display_name.split(',').slice(0, 3);
+          setLocationName(`📍 ${parts.join(',')} (Lat: ${selectedLocation.lat.toFixed(3)}, Lng: ${selectedLocation.lng.toFixed(3)})`);
+        } else {
+          setLocationName(`📍 Lat ${selectedLocation.lat.toFixed(3)}, Lon ${selectedLocation.lng.toFixed(3)}`);
+        }
+      } catch (err) {
+        console.error('Reverse geocoding error:', err);
+        setLocationName(`📍 Lat ${selectedLocation.lat.toFixed(3)}, Lon ${selectedLocation.lng.toFixed(3)}`);
+      }
+    };
+    fetchLocationName();
+  }, [selectedLocation.lat, selectedLocation.lng]);
 
   // Fetch climate data whenever lat/lon changes
   useEffect(() => {
@@ -27,31 +98,31 @@ export default function Climate({ lat, lon }) {
       setLoading(true);
       try {
         const response = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${selectedLocation.lat}&longitude=${selectedLocation.lng}&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,rain,visibility&forecast_days=1&timezone=auto`
+          `https://api.open-meteo.com/v1/forecast?latitude=${selectedLocation.lat}&longitude=${selectedLocation.lng}&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,wind_speed_10m,wind_direction_10m,rain&forecast_days=5&timezone=auto`
         );
         if (!response.ok) throw new Error('Failed to fetch climate data');
         const data = await response.json();
 
-        // Process current data (latest hour)
-        const latestIndex = data.hourly.time.length - 1;
-        setCurrentData({
-          temperature: data.hourly.temperature_2m[latestIndex],
-          humidity: data.hourly.relative_humidity_2m[latestIndex],
-          dewPoint: data.hourly.dew_point_2m[latestIndex],
-          rain: data.hourly.rain[latestIndex],
-          visibility: data.hourly.visibility[latestIndex] / 1000, // Convert to km
-        });
+        const dailyForecasts = processDailyAverages(data);
+        setForecast(dailyForecasts);
 
         // Process hourly data
-        const processedHourly = data.hourly.time.map((time, index) => ({
+        const hourly = data.hourly;
+        const processedHourly = hourly.time.map((time, index) => ({
           time,
-          temperature: data.hourly.temperature_2m[index],
-          humidity: data.hourly.relative_humidity_2m[index],
-          dewPoint: data.hourly.dew_point_2m[index],
-          rain: data.hourly.rain[index],
-          visibility: data.hourly.visibility[index] / 1000,
+          temperature: hourly.temperature_2m[index],
+          humidity: hourly.relative_humidity_2m[index],
+          dewPoint: hourly.dew_point_2m[index],
+          windSpeed: hourly.wind_speed_10m[index],
+          windDirection: hourly.wind_direction_10m[index],
+          rain: hourly.rain[index],
         }));
         setHourlyData(processedHourly);
+
+        // Set selected day to first day if not set
+        if (!selectedDay && dailyForecasts.length > 0) {
+          setSelectedDay(dailyForecasts[0].date);
+        }
       } catch (err) {
         setError(err.message);
       } finally {
@@ -59,37 +130,49 @@ export default function Climate({ lat, lon }) {
       }
     };
     fetchClimateData();
-  }, [selectedLocation]);
+  }, [selectedLocation.lat, selectedLocation.lng, selectedDay]);
 
 
 
-  const getTrendIndicator = (data, key) => {
-    if (data.length < 3) return '→';
-    const last3 = data.slice(-3).map(d => d[key]);
-    const avg = last3.reduce((a, b) => a + b, 0) / 3;
-    const prevAvg = data.slice(-4, -1).reduce((a, b) => a + b, 0) / 3;
-    if (avg > prevAvg + 0.1) return '↑';
-    if (avg < prevAvg - 0.1) return '↓';
-    return '→';
+  const processDailyAverages = (data) => {
+    const { hourly } = data;
+    const times = hourly.time;
+    const temperature = hourly.temperature_2m;
+    const humidity = hourly.relative_humidity_2m;
+    const dewPoint = hourly.dew_point_2m;
+    const windSpeed = hourly.wind_speed_10m;
+    const windDirection = hourly.wind_direction_10m;
+    const rain = hourly.rain;
+
+    const dailyData = {};
+    times.forEach((time, index) => {
+      const date = time.split('T')[0];
+      if (!dailyData[date]) dailyData[date] = { temperature: [], humidity: [], dewPoint: [], windSpeed: [], windDirection: [], rain: [] };
+      dailyData[date].temperature.push(temperature[index]);
+      dailyData[date].humidity.push(humidity[index]);
+      dailyData[date].dewPoint.push(dewPoint[index]);
+      dailyData[date].windSpeed.push(windSpeed[index]);
+      dailyData[date].windDirection.push(windDirection[index]);
+      dailyData[date].rain.push(rain[index]);
+    });
+
+    return Object.entries(dailyData).map(([date, values]) => ({
+      date,
+      temperature: (values.temperature.reduce((a, b) => a + b, 0) / values.temperature.length).toFixed(1),
+      humidity: (values.humidity.reduce((a, b) => a + b, 0) / values.humidity.length).toFixed(1),
+      dewPoint: (values.dewPoint.reduce((a, b) => a + b, 0) / values.dewPoint.length).toFixed(1),
+      windSpeed: (values.windSpeed.reduce((a, b) => a + b, 0) / values.windSpeed.length).toFixed(1),
+      windDirection: (values.windDirection.reduce((a, b) => a + b, 0) / values.windDirection.length).toFixed(0),
+      rain: (values.rain.reduce((a, b) => a + b, 0)).toFixed(2),
+    }));
   };
 
-  const getDailySummary = () => {
-    if (hourlyData.length === 0) return {};
-    const temperatures = hourlyData.map(d => d.temperature);
-    const humidities = hourlyData.map(d => d.humidity);
-    const rains = hourlyData.map(d => d.rain);
-    const visibilities = hourlyData.map(d => d.visibility);
-
-    return {
-      maxTemp: Math.max(...temperatures),
-      minTemp: Math.min(...temperatures),
-      avgHumidity: humidities.reduce((a, b) => a + b, 0) / humidities.length,
-      totalRain: rains.reduce((a, b) => a + b, 0),
-      bestVisibility: Math.max(...visibilities),
-    };
-  };
-
-  const summary = getDailySummary();
+  const formatDate = (dateString) =>
+    new Date(dateString + 'T00:00:00').toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
 
   // Map click handler to update lat/lon
   function LocationMarker() {
@@ -101,12 +184,49 @@ export default function Climate({ lat, lon }) {
     return <Marker position={[selectedLocation.lat, selectedLocation.lng]} />;
   }
 
+  // Handle search submission
+  const handleSearch = async () => {
+    if (searchType === 'location') {
+      if (!searchInput.trim()) return;
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchInput)}&format=json&limit=1`
+        );
+        const data = await response.json();
+        if (data && data.length > 0) {
+          setSelectedLocation({ lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) });
+          setSearchInput('');
+        } else {
+          alert('Location not found. Please try a different search term.');
+        }
+      } catch (err) {
+        console.error('Geocoding error:', err);
+        alert('Error searching for location. Please try again.');
+      }
+    } else {
+      // Coordinates search
+      const latitude = parseFloat(latInput);
+      const longitude = parseFloat(lonInput);
+      if (!isNaN(latitude) && !isNaN(longitude)) {
+        if (latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180) {
+          setSelectedLocation({ lat: latitude, lng: longitude });
+          setLatInput('');
+          setLonInput('');
+        } else {
+          alert('Please enter valid coordinates (Latitude: -90 to 90, Longitude: -180 to 180)');
+        }
+      } else {
+        alert('Please enter valid numeric coordinates');
+      }
+    }
+  };
+
   return (
     <div className="climate-page">
       {/* Header */}
       <div className="aqi-header">
         <h2>Climate Predictions</h2>
-        <p className="aqi-subtitle">Click on the map to choose location</p>
+        <p className="aqi-subtitle">{locationName}</p>
       </div>
 
       {/* 2D Map */}
@@ -147,331 +267,363 @@ export default function Climate({ lat, lon }) {
         </MapContainer>
       </div>
 
-      {/* Input boxes for lat/lon */}
-      <div className="location-inputs">
-        <div className="input-group">
-          <label htmlFor="latitude">Latitude:</label>
-          <input
-            type="number"
-            id="latitude"
-            value={selectedLocation.lat}
-            onChange={(e) => setSelectedLocation({ ...selectedLocation, lat: parseFloat(e.target.value) })}
-            step="0.01"
-            min="-90"
-            max="90"
-          />
-        </div>
-        <div className="input-group">
-          <label htmlFor="longitude">Longitude:</label>
-          <input
-            type="number"
-            id="longitude"
-            value={selectedLocation.lng}
-            onChange={(e) => setSelectedLocation({ ...selectedLocation, lng: parseFloat(e.target.value) })}
-            step="0.01"
-            min="-180"
-            max="180"
-          />
+      {/* Search Bar */}
+      <div style={{
+        background: 'rgba(255, 255, 255, 0.03)',
+        padding: '20px',
+        borderRadius: '12px',
+        marginBottom: '20px',
+        border: '1px solid rgba(26, 216, 205, 0.2)'
+      }}>
+        <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+          {/* Search Type Dropdown */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>Search By:</label>
+            <select
+              value={searchType}
+              onChange={(e) => setSearchType(e.target.value)}
+              style={{
+                padding: '10px 15px',
+                borderRadius: '8px',
+                border: '1px solid rgba(26, 216, 205, 0.3)',
+                background: 'rgba(16, 24, 32, 0.8)',
+                color: '#e6f0f0',
+                fontSize: '0.95rem',
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+            >
+              <option value="location">Location Name</option>
+              <option value="coordinates">Lat/Long</option>
+            </select>
+          </div>
+
+          {/* Search Input Fields */}
+          {searchType === 'location' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, minWidth: '200px' }}>
+              <label style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>Location:</label>
+              <input
+                type="text"
+                placeholder="Enter city, address, or place..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                style={{
+                  padding: '10px 15px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(26, 216, 205, 0.3)',
+                  background: 'rgba(16, 24, 32, 0.8)',
+                  color: '#e6f0f0',
+                  fontSize: '0.95rem',
+                  outline: 'none'
+                }}
+              />
+            </div>
+          ) : (
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, minWidth: '150px' }}>
+                <label style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>Latitude:</label>
+                <input
+                  type="number"
+                  placeholder="e.g., 40.7128"
+                  value={latInput}
+                  onChange={(e) => setLatInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  step="0.0001"
+                  style={{
+                    padding: '10px 15px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(26, 216, 205, 0.3)',
+                    background: 'rgba(16, 24, 32, 0.8)',
+                    color: '#e6f0f0',
+                    fontSize: '0.95rem',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, minWidth: '150px' }}>
+                <label style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>Longitude:</label>
+                <input
+                  type="number"
+                  placeholder="e.g., -74.0060"
+                  value={lonInput}
+                  onChange={(e) => setLonInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  step="0.0001"
+                  style={{
+                    padding: '10px 15px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(26, 216, 205, 0.3)',
+                    background: 'rgba(16, 24, 32, 0.8)',
+                    color: '#e6f0f0',
+                    fontSize: '0.95rem',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Search Button */}
+          <button
+            onClick={handleSearch}
+            style={{
+              padding: '10px 30px',
+              borderRadius: '8px',
+              border: 'none',
+              background: 'linear-gradient(135deg, var(--accent), #00c6ff)',
+              color: '#0b0b0f',
+              fontSize: '0.95rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 15px rgba(26, 216, 205, 0.3)'
+            }}
+            onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
+            onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+          >
+            🔍 Search
+          </button>
         </div>
       </div>
 
       {loading && <p>Loading climate data...</p>}
       {error && <p>Error: {error}</p>}
 
-      {/* Current Climate Cards */}
-      {!loading && !error && Object.keys(currentData).length > 0 && (
-        <div className="aqi-grid-wrapper">
-          <div className="forecast-grid">
-            <div className="forecast-card magic-bento-card" style={{ '--animation-delay': '0s' }}>
-              <div className="card-spotlight"></div>
-              <div className="card-content">
-                <div className="card-header">
-                  <span className="status-emoji">🌡️</span>
-                  <div>
-                    <p className="card-date">Temperature</p>
-                    <p className="card-status">{getTrendIndicator(hourlyData, 'temperature')}</p>
+      {/* Forecast Cards */}
+      <div className="aqi-grid-wrapper" ref={gridRef}>
+        <div className="forecast-grid">
+          {forecast.map((day, index) => {
+            return (
+              <div
+                key={day.date}
+                className={`forecast-card magic-bento-card ${selectedDay === day.date ? 'selected' : ''}`}
+                style={{
+                  '--card-color': '#10b981',
+                  '--glow-color': '16, 185, 129',
+                  '--animation-delay': `${index * 0.1}s`,
+                }}
+                onClick={() => setSelectedDay(day.date)}
+              >
+                <div className="card-spotlight"></div>
+                <div className="card-content">
+                  <div className="card-header">
+                    <span className="status-emoji">🌤️</span>
+                    <div>
+                      <p className="card-date">{formatDate(day.date)}</p>
+                      <p className="card-status">{day.temperature}°C</p>
+                    </div>
                   </div>
-                </div>
-                <div className="card-metrics">
-                  <div className="metric">
-                    <span className="metric-label">Current</span>
-                    <span className="metric-value">{currentData.temperature.toFixed(1)}°C</span>
+                  
+                  {/* Metrics - Two Columns */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '10px'
+                  }}>
+                    <div className="metric">
+                      <span className="metric-label">Temp</span>
+                      <span className="metric-value">{day.temperature}°C</span>
+                    </div>
+                    <div className="metric">
+                      <span className="metric-label">Humidity</span>
+                      <span className="metric-value">{day.humidity}%</span>
+                    </div>
+                    <div className="metric">
+                      <span className="metric-label">Dew Point</span>
+                      <span className="metric-value">{day.dewPoint}°C</span>
+                    </div>
+                    <div className="metric">
+                      <span className="metric-label">Wind</span>
+                      <span className="metric-value">{day.windSpeed} km/h</span>
+                    </div>
+                    <div className="metric">
+                      <span className="metric-label">Direction</span>
+                      <span className="metric-value">{day.windDirection}°</span>
+                    </div>
+                    <div className="metric">
+                      <span className="metric-label">Rain</span>
+                      <span className="metric-value">{day.rain} mm</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            );
+          })}
+        </div>
+      </div>
 
-            <div className="forecast-card magic-bento-card" style={{ '--animation-delay': '0.1s' }}>
-              <div className="card-spotlight"></div>
-              <div className="card-content">
-                <div className="card-header">
-                  <span className="status-emoji">💧</span>
-                  <div>
-                    <p className="card-date">Humidity</p>
-                    <p className="card-status">{getTrendIndicator(hourlyData, 'humidity')}</p>
-                  </div>
-                </div>
-                <div className="card-metrics">
-                  <div className="metric">
-                    <span className="metric-label">Current</span>
-                    <span className="metric-value">{currentData.humidity}%</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="forecast-card magic-bento-card" style={{ '--animation-delay': '0.2s' }}>
-              <div className="card-spotlight"></div>
-              <div className="card-content">
-                <div className="card-header">
-                  <span className="status-emoji">🌫️</span>
-                  <div>
-                    <p className="card-date">Dew Point</p>
-                    <p className="card-status">→</p>
-                  </div>
-                </div>
-                <div className="card-metrics">
-                  <div className="metric">
-                    <span className="metric-label">Current</span>
-                    <span className="metric-value">{currentData.dewPoint.toFixed(1)}°C</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="forecast-card magic-bento-card" style={{ '--animation-delay': '0.3s' }}>
-              <div className="card-spotlight"></div>
-              <div className="card-content">
-                <div className="card-header">
-                  <span className="status-emoji">🌧️</span>
-                  <div>
-                    <p className="card-date">Rain</p>
-                    <p className="card-status">{getTrendIndicator(hourlyData, 'rain')}</p>
-                  </div>
-                </div>
-                <div className="card-metrics">
-                  <div className="metric">
-                    <span className="metric-label">Current</span>
-                    <span className="metric-value">{currentData.rain.toFixed(1)}mm</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="forecast-card magic-bento-card" style={{ '--animation-delay': '0.4s' }}>
-              <div className="card-spotlight"></div>
-              <div className="card-content">
-                <div className="card-header">
-                  <span className="status-emoji">👁️</span>
-                  <div>
-                    <p className="card-date">Visibility</p>
-                    <p className="card-status">→</p>
-                  </div>
-                </div>
-                <div className="card-metrics">
-                  <div className="metric">
-                    <span className="metric-label">Current</span>
-                    <span className="metric-value">{currentData.visibility.toFixed(1)}km</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+      {/* Hourly Chart for Selected Day */}
+      {selectedDay && hourlyData.length > 0 && (
+        <div className="chart-container">
+          <h3 className="chart-title">Hourly Weather for {formatDate(selectedDay)}</h3>
+          <ResponsiveContainer width="100%" height={500}>
+            <LineChart 
+              data={hourlyData.filter(item => item.time.startsWith(selectedDay))}
+              margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" opacity={0.3} />
+              <XAxis
+                dataKey="time"
+                tickFormatter={(time) => new Date(time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                stroke="#cbd5e1"
+                tick={{ fontSize: 12 }}
+                interval="preserveStartEnd"
+              />
+              <YAxis 
+                stroke="#cbd5e1"
+                tick={{ fontSize: 12 }}
+                label={{ value: 'Values', angle: -90, position: 'insideLeft', style: { fill: '#cbd5e1', fontSize: 12 } }}
+                domain={[0, 'auto']}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                  border: '1px solid rgba(148, 163, 184, 0.5)',
+                  borderRadius: '10px',
+                  color: '#f1f5f9',
+                  padding: '12px'
+                }}
+                labelFormatter={(time) => new Date(time).toLocaleString('en-US', { weekday: 'long', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                itemStyle={{ fontSize: '13px', padding: '3px 0' }}
+              />
+              <Legend 
+                wrapperStyle={{ paddingTop: '20px' }}
+                iconType="line"
+                iconSize={20}
+              />
+              <Line
+                type="monotone"
+                dataKey="temperature"
+                stroke="#10b981"
+                strokeWidth={3}
+                name="Temperature (°C)"
+                dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#10b981', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="humidity"
+                stroke="#3b82f6"
+                strokeWidth={3}
+                name="Humidity (%)"
+                dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#3b82f6', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="dewPoint"
+                stroke="#8b5cf6"
+                strokeWidth={3}
+                name="Dew Point (°C)"
+                dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#8b5cf6', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="windSpeed"
+                stroke="#f59e0b"
+                strokeWidth={3}
+                name="Wind Speed (km/h)"
+                dot={{ fill: '#f59e0b', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#f59e0b', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="rain"
+                stroke="#06b6d4"
+                strokeWidth={3}
+                name="Rain (mm)"
+                dot={{ fill: '#06b6d4', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#06b6d4', strokeWidth: 2 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       )}
 
-      {/* Charts */}
-      {hourlyData.length > 0 && (
-        <>
-          {/* Temperature Chart */}
-          <div className="chart-container">
-            <h3 className="chart-title">Temperature Trend</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={hourlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" />
-                <XAxis
-                  dataKey="time"
-                  tickFormatter={(time) => new Date(time).toLocaleTimeString('en-US', { hour: '2-digit' })}
-                  stroke="#cbd5e1"
-                />
-                <YAxis stroke="#cbd5e1" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'rgba(30, 41, 59, 0.9)',
-                    border: '1px solid rgba(148, 163, 184, 0.3)',
-                    borderRadius: '8px',
-                    color: '#f1f5f9'
-                  }}
-                  labelFormatter={(time) => new Date(time).toLocaleString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="temperature"
-                  stroke="#10b981"
-                  strokeWidth={3}
-                  name="Temperature (°C)"
-                  dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6, stroke: '#10b981', strokeWidth: 2 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Humidity Chart */}
-          <div className="chart-container">
-            <h3 className="chart-title">Humidity Trend</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={hourlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" />
-                <XAxis
-                  dataKey="time"
-                  tickFormatter={(time) => new Date(time).toLocaleTimeString('en-US', { hour: '2-digit' })}
-                  stroke="#cbd5e1"
-                />
-                <YAxis stroke="#cbd5e1" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'rgba(30, 41, 59, 0.9)',
-                    border: '1px solid rgba(148, 163, 184, 0.3)',
-                    borderRadius: '8px',
-                    color: '#f1f5f9'
-                  }}
-                  labelFormatter={(time) => new Date(time).toLocaleString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="humidity"
-                  stroke="#3b82f6"
-                  strokeWidth={3}
-                  name="Humidity (%)"
-                  dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6, stroke: '#3b82f6', strokeWidth: 2 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Visibility Chart */}
-          <div className="chart-container">
-            <h3 className="chart-title">Visibility Trend</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={hourlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" />
-                <XAxis
-                  dataKey="time"
-                  tickFormatter={(time) => new Date(time).toLocaleTimeString('en-US', { hour: '2-digit' })}
-                  stroke="#cbd5e1"
-                />
-                <YAxis stroke="#cbd5e1" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'rgba(30, 41, 59, 0.9)',
-                    border: '1px solid rgba(148, 163, 184, 0.3)',
-                    borderRadius: '8px',
-                    color: '#f1f5f9'
-                  }}
-                  labelFormatter={(time) => new Date(time).toLocaleString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="visibility"
-                  stroke="#f59e0b"
-                  strokeWidth={3}
-                  name="Visibility (km)"
-                  dot={{ fill: '#f59e0b', strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6, stroke: '#f59e0b', strokeWidth: 2 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Rainfall Chart */}
-          <div className="chart-container">
-            <h3 className="chart-title">Rainfall Trend</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={hourlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" />
-                <XAxis
-                  dataKey="time"
-                  tickFormatter={(time) => new Date(time).toLocaleTimeString('en-US', { hour: '2-digit' })}
-                  stroke="#cbd5e1"
-                />
-                <YAxis stroke="#cbd5e1" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'rgba(30, 41, 59, 0.9)',
-                    border: '1px solid rgba(148, 163, 184, 0.3)',
-                    borderRadius: '8px',
-                    color: '#f1f5f9'
-                  }}
-                  labelFormatter={(time) => new Date(time).toLocaleString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="rain"
-                  stroke="#ef4444"
-                  strokeWidth={3}
-                  name="Rain (mm)"
-                  dot={{ fill: '#ef4444', strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6, stroke: '#ef4444', strokeWidth: 2 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Dew Point Bar Chart */}
-          <div className="chart-container">
-            <h3 className="chart-title">Dew Point (Hourly)</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={hourlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" />
-                <XAxis
-                  dataKey="time"
-                  tickFormatter={(time) => new Date(time).toLocaleTimeString('en-US', { hour: '2-digit' })}
-                  stroke="#cbd5e1"
-                />
-                <YAxis stroke="#cbd5e1" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'rgba(30, 41, 59, 0.9)',
-                    border: '1px solid rgba(148, 163, 184, 0.3)',
-                    borderRadius: '8px',
-                    color: '#f1f5f9'
-                  }}
-                  labelFormatter={(time) => new Date(time).toLocaleString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                />
-                <Bar dataKey="dewPoint" fill="#8b5cf6" name="Dew Point (°C)" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Daily Summary */}
-          <div className="chart-container">
-            <h3 className="chart-title">Daily Summary</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
-              <div className="metric" style={{ background: 'rgba(51, 65, 85, 0.3)', borderRadius: '10px', padding: '15px', borderLeft: '3px solid #10b981' }}>
-                <span className="metric-label">Max Temperature</span>
-                <span className="metric-value">{summary.maxTemp?.toFixed(1)}°C</span>
-              </div>
-              <div className="metric" style={{ background: 'rgba(51, 65, 85, 0.3)', borderRadius: '10px', padding: '15px', borderLeft: '3px solid #10b981' }}>
-                <span className="metric-label">Min Temperature</span>
-                <span className="metric-value">{summary.minTemp?.toFixed(1)}°C</span>
-              </div>
-              <div className="metric" style={{ background: 'rgba(51, 65, 85, 0.3)', borderRadius: '10px', padding: '15px', borderLeft: '3px solid #3b82f6' }}>
-                <span className="metric-label">Avg Humidity</span>
-                <span className="metric-value">{summary.avgHumidity?.toFixed(1)}%</span>
-              </div>
-              <div className="metric" style={{ background: 'rgba(51, 65, 85, 0.3)', borderRadius: '10px', padding: '15px', borderLeft: '3px solid #ef4444' }}>
-                <span className="metric-label">Total Rainfall</span>
-                <span className="metric-value">{summary.totalRain?.toFixed(1)}mm</span>
-              </div>
-              <div className="metric" style={{ background: 'rgba(51, 65, 85, 0.3)', borderRadius: '10px', padding: '15px', borderLeft: '3px solid #f59e0b' }}>
-                <span className="metric-label">Best Visibility</span>
-                <span className="metric-value">{summary.bestVisibility?.toFixed(1)}km</span>
-              </div>
-            </div>
-          </div>
-        </>
+      {/* Daily Trends Chart */}
+      {forecast.length > 0 && (
+        <div className="chart-container">
+          <h3 className="chart-title">Daily Weather Trends</h3>
+          <ResponsiveContainer width="100%" height={500}>
+            <LineChart data={forecast} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" opacity={0.3} />
+              <XAxis
+                dataKey="date"
+                tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                stroke="#cbd5e1"
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis 
+                stroke="#cbd5e1" 
+                tick={{ fontSize: 12 }}
+                label={{ value: 'Daily Average', angle: -90, position: 'insideLeft', style: { fill: '#cbd5e1', fontSize: 12 } }}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                  border: '1px solid rgba(148, 163, 184, 0.5)',
+                  borderRadius: '10px',
+                  color: '#f1f5f9',
+                  padding: '12px'
+                }}
+                labelFormatter={(date) => new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                itemStyle={{ fontSize: '13px', padding: '3px 0' }}
+              />
+              <Legend 
+                wrapperStyle={{ paddingTop: '20px' }}
+                iconType="line"
+                iconSize={20}
+              />
+              <Line
+                type="monotone"
+                dataKey="temperature"
+                stroke="#10b981"
+                strokeWidth={3}
+                name="Temperature (°C)"
+                dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#10b981', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="humidity"
+                stroke="#3b82f6"
+                strokeWidth={3}
+                name="Humidity (%)"
+                dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#3b82f6', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="dewPoint"
+                stroke="#8b5cf6"
+                strokeWidth={3}
+                name="Dew Point (°C)"
+                dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#8b5cf6', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="windSpeed"
+                stroke="#f59e0b"
+                strokeWidth={3}
+                name="Wind Speed (km/h)"
+                dot={{ fill: '#f59e0b', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#f59e0b', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="rain"
+                stroke="#06b6d4"
+                strokeWidth={3}
+                name="Rain (mm)"
+                dot={{ fill: '#06b6d4', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#06b6d4', strokeWidth: 2 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       )}
 
       {/* Styles */}
