@@ -19,6 +19,8 @@ export default function Aqi() {
   const [lat, setLat] = useState(40.7128); // Default New York
   const [lon, setLon] = useState(-74.0060);
   const [mapType, setMapType] = useState('street'); // 'street' or 'satellite'
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [hourlyData, setHourlyData] = useState([]);
   const gridRef = useRef(null);
 
   // Fetch AQI data whenever lat/lon changes
@@ -33,6 +35,20 @@ export default function Aqi() {
         const data = await response.json();
         const dailyForecasts = processDailyAverages(data);
         setForecast(dailyForecasts);
+        // Process hourly data
+        const hourly = data.hourly;
+        const processedHourly = hourly.time.map((time, index) => ({
+          time,
+          pm10: hourly.pm10[index],
+          pm25: hourly.pm2_5[index],
+          so2: hourly.sulphur_dioxide[index],
+          uvIndex: hourly.uv_index[index],
+        }));
+        setHourlyData(processedHourly);
+        // Set selected day to first day if not set
+        if (!selectedDay && dailyForecasts.length > 0) {
+          setSelectedDay(dailyForecasts[0].date);
+        }
       } catch (err) {
         setError(err.message);
       } finally {
@@ -40,7 +56,7 @@ export default function Aqi() {
       }
     };
     fetchAirQuality();
-  }, [lat, lon]);
+  }, [lat, lon, selectedDay]);
 
   const processDailyAverages = (data) => {
     const { hourly } = data;
@@ -179,12 +195,13 @@ export default function Aqi() {
             return (
               <div
                 key={day.date}
-                className="forecast-card magic-bento-card"
+                className={`forecast-card magic-bento-card ${selectedDay === day.date ? 'selected' : ''}`}
                 style={{
                   '--card-color': status.color,
                   '--glow-color': status.glow,
                   '--animation-delay': `${index * 0.1}s`,
                 }}
+                onClick={() => setSelectedDay(day.date)}
               >
                 <div className="card-spotlight"></div>
                 <div className="card-content">
@@ -219,6 +236,70 @@ export default function Aqi() {
           })}
         </div>
       </div>
+
+      {/* Hourly Chart for Selected Day */}
+      {selectedDay && hourlyData.length > 0 && (
+        <div className="chart-container">
+          <h3 className="chart-title">Hourly AQI for {formatDate(selectedDay)}</h3>
+          <ResponsiveContainer width="100%" height={400}>
+            <LineChart data={hourlyData.filter(item => item.time.startsWith(selectedDay))}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" />
+              <XAxis
+                dataKey="time"
+                tickFormatter={(time) => new Date(time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                stroke="#cbd5e1"
+              />
+              <YAxis stroke="#cbd5e1" />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                  border: '1px solid rgba(148, 163, 184, 0.3)',
+                  borderRadius: '8px',
+                  color: '#f1f5f9'
+                }}
+                labelFormatter={(time) => new Date(time).toLocaleString('en-US', { weekday: 'long', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="pm25"
+                stroke="#10b981"
+                strokeWidth={2}
+                name="PM2.5"
+                dot={{ fill: '#10b981', strokeWidth: 1, r: 3 }}
+                activeDot={{ r: 5, stroke: '#10b981', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="pm10"
+                stroke="#f59e0b"
+                strokeWidth={2}
+                name="PM10"
+                dot={{ fill: '#f59e0b', strokeWidth: 1, r: 3 }}
+                activeDot={{ r: 5, stroke: '#f59e0b', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="so2"
+                stroke="#ef4444"
+                strokeWidth={2}
+                name="SO₂"
+                dot={{ fill: '#ef4444', strokeWidth: 1, r: 3 }}
+                activeDot={{ r: 5, stroke: '#ef4444', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="uvIndex"
+                stroke="#3b82f6"
+                strokeWidth={2}
+                name="UV Index"
+                dot={{ fill: '#3b82f6', strokeWidth: 1, r: 3 }}
+                activeDot={{ r: 5, stroke: '#3b82f6', strokeWidth: 2 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       {/* AQI Chart */}
       {forecast.length > 0 && (
@@ -457,6 +538,11 @@ export default function Aqi() {
           border-color: var(--card-color);
           transform: translateY(-8px);
           box-shadow: 0 0 40px rgba(var(--glow-color), 0.3), 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .forecast-card.selected {
+          border-color: #3b82f6;
+          box-shadow: 0 0 40px rgba(59, 130, 246, 0.3), 0 8px 32px rgba(0, 0, 0, 0.4);
         }
 
         .card-header {

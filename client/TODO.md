@@ -1,12 +1,10 @@
-# TODO: Implement Geolocation and Location Display for Climate Page
+# TODO: Update Aqi.jsx Component
 
 ## Tasks
-- [x] Modify `client/src/components/predictions/Climate.jsx` to fetch user's device location on component mount and set it as selectedLocation.
-- [x] Modify `client/src/components/predictions/ForecastPanel.jsx` to perform reverse geocoding for the selected location and display the location name in the forecast header instead of lat/lng coordinates.
-- [ ] Test the implementation: Ensure geolocation works, map centers and shows marker, forecast loads, and location name displays correctly.
-- [ ] Handle edge cases: Geolocation permission denied, API failures for reverse geocoding.
-
-## Notes
-- Use `navigator.geolocation.getCurrentPosition` for fetching location.
-- Use Nominatim reverse API for getting location name from lat/lng.
-- Update ForecastPanel header to show location name when available.
+- [ ] Add state variables: selectedDay (string) and hourlyData (array)
+- [ ] Modify fetchAirQuality function: process and set hourlyData from API response, set selectedDay to first forecast date if not set
+- [ ] Make forecast cards clickable: add onClick handler to set selectedDay to clicked day's date
+- [ ] Add new section below existing chart: "Hourly AQI Trends" with ResponsiveContainer and LineChart for selected day's hourly data
+- [ ] Ensure styling matches existing dark theme, responsiveness, animations, and card layout
+- [ ] Test: Click forecast cards, verify hourly chart displays correct data for selected day
+- [ ] Test responsiveness on mobile devices
