@@ -7,11 +7,12 @@ import Aqi from "./components/predictions/Aqi";
 import Marine from "./components/predictions/Marine";
 import Climate from "./components/predictions/Climate";
 import GlacierInsights from "./components/GlacierInsights";
+import LandingPage from "./components/LandingPage";
 import "./index.css";
 
 export default function App() {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
-  const [activePage, setActivePage] = useState("dashboard");
+  const [activePage, setActivePage] = useState("landing");
   const [coordinates, setCoordinates] = useState(null);
 
   const handleGlobePick = (lat, lon) => {
@@ -19,6 +20,15 @@ export default function App() {
   };
 
   const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
+
+  const handleGetStarted = () => {
+    setActivePage("dashboard");
+  };
+
+  // Show landing page
+  if (activePage === "landing") {
+    return <LandingPage onGetStarted={handleGetStarted} />;
+  }
 
   return (
     <div className="app">

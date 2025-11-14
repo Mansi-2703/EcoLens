@@ -51,6 +51,7 @@ export default function Aqi() {
   const [trendsData, setTrendsData] = useState([]);
   const [trendsLoading, setTrendsLoading] = useState(false);
   const [trendsError, setTrendsError] = useState(null);
+  const [selectedMetric, setSelectedMetric] = useState('usAqi'); // 'usAqi', 'pm25', or 'pm10'
 
   // Fetch location name using reverse geocoding with high granularity (matching Real-Time Monitor)
   useEffect(() => {
@@ -822,134 +823,75 @@ export default function Aqi() {
       )}
 
       {/* Past 3-Month AQI Trends */}
-      <div className="trends-section">
-        <h3 className="chart-title">Past 3-Month AQI Trends</h3>
-        {trendsLoading && <p>Loading trends...</p>}
-        {trendsError && <p>Error: {trendsError}</p>}
-        {trendsData.length > 0 && (
-          <>
-            {/* PM10 Trend */}
-            <div className="chart-container">
-              <h4 className="chart-subtitle">PM10 Trend</h4>
-              <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={trendsData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
-                  <XAxis
-                    dataKey="date"
-                    tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    stroke="rgba(255,255,255,0.7)"
-                    tick={{ fontSize: 12 }}
-                    interval="preserveStartEnd"
-                  />
-                  <YAxis
-                    stroke="rgba(255,255,255,0.7)"
-                    tick={{ fontSize: 12 }}
-                    domain={[0, 'auto']}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'rgba(0,0,0,0.9)',
-                      border: '1px solid rgba(255,255,255,0.3)',
-                      borderRadius: '10px',
-                      color: '#fff',
-                      padding: '12px'
-                    }}
-                    labelFormatter={(date) => new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="pm10"
-                    stroke="#6ac3ff"
-                    strokeWidth={2}
-                    dot={false}
-                    connectNulls={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* PM2.5 Trend */}
-            <div className="chart-container">
-              <h4 className="chart-subtitle">PM2.5 Trend</h4>
-              <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={trendsData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
-                  <XAxis
-                    dataKey="date"
-                    tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    stroke="rgba(255,255,255,0.7)"
-                    tick={{ fontSize: 12 }}
-                    interval="preserveStartEnd"
-                  />
-                  <YAxis
-                    stroke="rgba(255,255,255,0.7)"
-                    tick={{ fontSize: 12 }}
-                    domain={[0, 'auto']}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'rgba(0,0,0,0.9)',
-                      border: '1px solid rgba(255,255,255,0.3)',
-                      borderRadius: '10px',
-                      color: '#fff',
-                      padding: '12px'
-                    }}
-                    labelFormatter={(date) => new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="pm25"
-                    stroke="#9b7bff"
-                    strokeWidth={2}
-                    dot={false}
-                    connectNulls={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* US AQI Trend */}
-            <div className="chart-container">
-              <h4 className="chart-subtitle">US AQI Trend</h4>
-              <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={trendsData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
-                  <XAxis
-                    dataKey="date"
-                    tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    stroke="rgba(255,255,255,0.7)"
-                    tick={{ fontSize: 12 }}
-                    interval="preserveStartEnd"
-                  />
-                  <YAxis
-                    stroke="rgba(255,255,255,0.7)"
-                    tick={{ fontSize: 12 }}
-                    domain={[0, 'auto']}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'rgba(0,0,0,0.9)',
-                      border: '1px solid rgba(255,255,255,0.3)',
-                      borderRadius: '10px',
-                      color: '#fff',
-                      padding: '12px'
-                    }}
-                    labelFormatter={(date) => new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="usAqi"
-                    stroke="#6fff9e"
-                    strokeWidth={2}
-                    dot={false}
-                    connectNulls={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </>
-        )}
-      </div>
+      {trendsData.length > 0 && (
+        <div className="chart-container">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h3 className="chart-title" style={{ margin: 0 }}>Past 3-Month AQI Trends</h3>
+            <select
+              value={selectedMetric}
+              onChange={(e) => setSelectedMetric(e.target.value)}
+              style={{
+                background: 'rgba(51, 65, 85, 0.5)',
+                border: '1px solid rgba(148, 163, 184, 0.3)',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                color: '#f1f5f9',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+            >
+              <option value="usAqi">US AQI</option>
+              <option value="pm25">PM2.5</option>
+              <option value="pm10">PM10</option>
+            </select>
+          </div>
+          {trendsLoading && <p style={{ color: '#94a3b8', textAlign: 'center' }}>Loading trends...</p>}
+          {trendsError && <p style={{ color: '#ef4444', textAlign: 'center' }}>Error: {trendsError}</p>}
+          <ResponsiveContainer width="100%" height={500}>
+            <LineChart data={trendsData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" opacity={0.3} />
+              <XAxis
+                dataKey="date"
+                stroke="#cbd5e1"
+                tick={{ fontSize: 12 }}
+                interval="preserveStartEnd"
+              />
+              <YAxis
+                stroke="#cbd5e1"
+                tick={{ fontSize: 12 }}
+                domain={[0, 'auto']}
+                label={{ 
+                  value: selectedMetric === 'usAqi' ? 'US AQI' : selectedMetric === 'pm25' ? 'PM2.5 (µg/m³)' : 'PM10 (µg/m³)', 
+                  angle: -90, 
+                  position: 'insideLeft', 
+                  style: { fill: '#cbd5e1', fontSize: 12 } 
+                }}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                  border: '1px solid rgba(148, 163, 184, 0.5)',
+                  borderRadius: '10px',
+                  color: '#f1f5f9',
+                  padding: '12px'
+                }}
+                labelStyle={{ color: '#cbd5e1', fontWeight: 600 }}
+              />
+              <Line
+                type="monotone"
+                dataKey={selectedMetric}
+                stroke={selectedMetric === 'usAqi' ? '#8b5cf6' : selectedMetric === 'pm25' ? '#10b981' : '#f59e0b'}
+                strokeWidth={3}
+                dot={false}
+                connectNulls={false}
+                name={selectedMetric === 'usAqi' ? 'US AQI' : selectedMetric === 'pm25' ? 'PM2.5' : 'PM10'}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       {/* Styles */}
       <style>{`
