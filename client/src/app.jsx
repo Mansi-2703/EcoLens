@@ -8,6 +8,7 @@ import Marine from "./components/predictions/Marine";
 import Climate from "./components/predictions/Climate";
 import GlacierInsights from "./components/GlacierInsights";
 import LandingPage from "./components/LandingPage";
+import EcoBot from "./components/EcoBot";
 import "./index.css";
 
 export default function App() {
@@ -93,7 +94,7 @@ export default function App() {
           {activePage === "climate" && <Climate />}
 
           {/* AI Chatbot page */}
-          {activePage === "ecobot" && <div className="page">EcoBot Page</div>}
+          {activePage === "ecobot" && <EcoBot />}
         </div>
       </main>
     </div>

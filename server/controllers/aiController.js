@@ -73,6 +73,192 @@ function generateRuleBasedSuggestions(aqiValue, pm25, pm10, temperature, humidit
   return response;
 }
 
+// EcoBot chatbot endpoint
+export const chatQuery = async (req, res) => {
+  try {
+    const { query, location } = req.body;
+
+    if (!query || !location || !location.lat || !location.lon) {
+      return res.status(400).json({ error: 'Query and location (lat, lon, name) are required' });
+    }
+
+    const { lat, lon, name } = location;
+
+    // Analyze query to determine temporal context and data needs
+    const lowerQuery = query.toLowerCase();
+    const isPast = /past|yesterday|last week|last month|history|was|were|ago/i.test(lowerQuery);
+    const isFuture = /forecast|future|tomorrow|next week|will be|predict|coming/i.test(lowerQuery);
+    const needsAQI = /air quality|aqi|pm2\.?5|pm10|pollution|pollutant/i.test(lowerQuery);
+    const needsWeather = /weather|temperature|temp|rain|wind|humidity|cloud|precipitation/i.test(lowerQuery);
+    const needsMarine = /marine|ocean|sea|wave|water temperature|surf/i.test(lowerQuery);
+
+    // Determine time parameters
+    let pastDays = 0;
+    let forecastDays = 1;
+
+    if (isPast) {
+      if (/last week|7 days/i.test(lowerQuery)) {
+        pastDays = 7;
+      } else if (/yesterday/i.test(lowerQuery)) {
+        pastDays = 1;
+      } else {
+        pastDays = 7;
+      }
+    }
+
+    if (isFuture) {
+      if (/next week|7 days/i.test(lowerQuery)) {
+        forecastDays = 7;
+      } else if (/tomorrow/i.test(lowerQuery)) {
+        forecastDays = 2;
+      } else {
+        forecastDays = 7;
+      }
+    }
+
+    // Fetch data from OpenMeteo APIs
+    const dataPromises = [];
+    let aqiData = null;
+    let weatherData = null;
+    let marineData = null;
+
+    const fetchAll = !needsAQI && !needsWeather && !needsMarine;
+
+    if (needsAQI || fetchAll) {
+      const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=us_aqi,pm2_5,pm10,carbon_monoxide,nitrogen_dioxide,ozone&past_days=${pastDays}&forecast_days=${forecastDays}&timezone=auto`;
+      dataPromises.push(
+        fetch(aqiUrl)
+          .then(r => r.json())
+          .then(data => { aqiData = data; })
+          .catch(err => console.error('AQI fetch error:', err))
+      );
+    }
+
+    if (needsWeather || fetchAll) {
+      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,relative_humidity_2m,rain,weathercode,windspeed_10m,cloudcover&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&past_days=${pastDays}&forecast_days=${forecastDays}&timezone=auto`;
+      dataPromises.push(
+        fetch(weatherUrl)
+          .then(r => r.json())
+          .then(data => { weatherData = data; })
+          .catch(err => console.error('Weather fetch error:', err))
+      );
+    }
+
+    if (needsMarine || fetchAll) {
+      const marineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=wave_height,wave_period,sea_surface_temperature,ocean_current_velocity&forecast_days=${forecastDays}&timezone=auto`;
+      dataPromises.push(
+        fetch(marineUrl)
+          .then(r => r.json())
+          .then(data => { marineData = data; })
+          .catch(err => console.error('Marine fetch error:', err))
+      );
+    }
+
+    await Promise.all(dataPromises);
+
+    // Extract relevant data points
+    const getDataPoint = (data, hourlyKey, isPast, isFuture) => {
+      if (!data || !data.hourly || !data.hourly[hourlyKey]) return null;
+      const arr = data.hourly[hourlyKey];
+      if (isPast) {
+        return arr[Math.max(0, arr.length - (24 * pastDays))];
+      } else if (isFuture) {
+        return arr[Math.min(24, arr.length - 1)];
+      } else {
+        return arr[arr.length - 1];
+      }
+    };
+
+    // Build prompt for Gemini
+    const timeContext = isPast ? 'Historical/Past Data' : isFuture ? 'Future Forecast' : 'Current Conditions';
+    const prompt = `You are EcoBot, an intelligent environmental assistant. Answer this question: "${query}"
+
+Location: ${name} (${lat}, ${lon})
+Time Context: ${timeContext}
+
+REAL DATA FROM OPENMETEO APIs:
+${aqiData ? `
+AIR QUALITY:
+- US AQI: ${getDataPoint(aqiData, 'us_aqi', isPast, isFuture) ?? 'N/A'}
+- PM2.5: ${getDataPoint(aqiData, 'pm2_5', isPast, isFuture)?.toFixed(1) ?? 'N/A'} µg/m³
+- PM10: ${getDataPoint(aqiData, 'pm10', isPast, isFuture)?.toFixed(1) ?? 'N/A'} µg/m³
+- CO: ${getDataPoint(aqiData, 'carbon_monoxide', isPast, isFuture)?.toFixed(1) ?? 'N/A'} µg/m³
+- NO2: ${getDataPoint(aqiData, 'nitrogen_dioxide', isPast, isFuture)?.toFixed(1) ?? 'N/A'} µg/m³
+- O3: ${getDataPoint(aqiData, 'ozone', isPast, isFuture)?.toFixed(1) ?? 'N/A'} µg/m³
+` : ''}
+${weatherData ? `
+WEATHER:
+- Temperature: ${getDataPoint(weatherData, 'temperature_2m', isPast, isFuture)?.toFixed(1) ?? 'N/A'}°C
+- Humidity: ${getDataPoint(weatherData, 'relative_humidity_2m', isPast, isFuture)?.toFixed(0) ?? 'N/A'}%
+- Rain: ${getDataPoint(weatherData, 'rain', isPast, isFuture)?.toFixed(1) ?? 'N/A'} mm
+- Wind: ${getDataPoint(weatherData, 'windspeed_10m', isPast, isFuture)?.toFixed(1) ?? 'N/A'} km/h
+- Cloud Cover: ${getDataPoint(weatherData, 'cloudcover', isPast, isFuture)?.toFixed(0) ?? 'N/A'}%
+` : ''}
+${marineData ? `
+MARINE:
+- Wave Height: ${getDataPoint(marineData, 'wave_height', isPast, isFuture)?.toFixed(1) ?? 'N/A'} m
+- Sea Temp: ${getDataPoint(marineData, 'sea_surface_temperature', isPast, isFuture)?.toFixed(1) ?? 'N/A'}°C
+` : ''}
+
+INSTRUCTIONS:
+1. Use ONLY the exact values provided above - these are real measurements
+2. Answer the user's specific question directly
+3. Include health/safety context: AQI 0-50 Good🟢, 51-100 Moderate🟡, 101-150 Sensitive🟠, 151-200 Unhealthy🔴, 201+ Very Unhealthy🟣
+4. Keep response concise (2-3 paragraphs)
+5. Use emojis for readability
+6. If data shows N/A, mention it's unavailable`;
+
+    try {
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      return res.json({
+        success: true,
+        response: text,
+        location: name,
+        dataFetched: {
+          aqi: !!aqiData,
+          weather: !!weatherData,
+          marine: !!marineData
+        },
+        temporal: isPast ? 'past' : isFuture ? 'future' : 'present'
+      });
+    } catch (geminiError) {
+      console.error('Gemini API error:', geminiError);
+      
+      // Fallback response
+      let fallbackResponse = `Data for ${name}:\n\n`;
+      if (aqiData) {
+        const aqi = getDataPoint(aqiData, 'us_aqi', isPast, isFuture);
+        fallbackResponse += `🌫️ AQI: ${aqi ?? 'N/A'}\n`;
+      }
+      if (weatherData) {
+        const temp = getDataPoint(weatherData, 'temperature_2m', isPast, isFuture);
+        fallbackResponse += `🌡️ Temperature: ${temp?.toFixed(1) ?? 'N/A'}°C\n`;
+      }
+      if (marineData) {
+        const waves = getDataPoint(marineData, 'wave_height', isPast, isFuture);
+        fallbackResponse += `🌊 Waves: ${waves?.toFixed(1) ?? 'N/A'}m\n`;
+      }
+
+      return res.json({
+        success: true,
+        response: fallbackResponse || 'Unable to fetch data for this location.',
+        location: name,
+        usingFallback: true
+      });
+    }
+  } catch (error) {
+    console.error('Chat query error:', error);
+    return res.status(500).json({ 
+      error: 'Failed to process query', 
+      message: error.message 
+    });
+  }
+};
+
 export const getSuggestions = async (req, res) => {
   try {
     const { aqi, weather, marine } = req.body;
@@ -114,6 +300,7 @@ When formulating your responses, consider:
 - Potential health impacts, especially for sensitive groups
 - Safety precautions for outdoor activities
 - Any necessary preparations or actions users should take
+- Always determine the country or climatic zone based on the user’s coordinates before giving advice. Adapt your interpretation of temperature, humidity, and comfort levels according to regional climate norms. For example, in India and other tropical regions, treat 20–30°C as normal and comfortable, not warm. In cooler regions such as Europe or the United States, temperatures above 22–25°C may be considered warm. All safety suggestions must be aligned with the typical climate of that region
 
 Environmental Data to Analyze:
 - Air Quality Index (AQI): ${aqiValue !== null ? aqiValue : 'N/A'}

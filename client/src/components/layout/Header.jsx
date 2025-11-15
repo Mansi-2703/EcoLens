@@ -15,7 +15,7 @@ export default function Header({ coordinates }) {
       try {
         // Use Nominatim reverse geocoding API for precise location
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=18&addressdetails=1`
+          `https://nominatim.streetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=18&addressdetails=1`
         );
         
         if (!response.ok) {
