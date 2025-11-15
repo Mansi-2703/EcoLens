@@ -7,57 +7,70 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Fallback rule-based suggestions when OpenAI API fails
 function generateRuleBasedSuggestions(aqiValue, pm25, pm10, temperature, humidity, windSpeed, rain, waveHeight, seaTemp, currentVelocity) {
-  const suggestions = [];
+  const airQuality = [];
+  const weatherConditions = [];
+  const marineConditions = [];
 
-  // AQI Analysis - Only show if unsafe
+  // AQI Analysis
   if (aqiValue !== null) {
     if (aqiValue >= 301) {
-      suggestions.push('HAZARDOUS Air Quality (AQI: ' + aqiValue + ')\nHealth Impact: Serious health effects for everyone. Emergency conditions.\nRecommendation: Stay indoors with air purifiers. Avoid all outdoor activities. Wear N95 masks if you must go outside.');
+      airQuality.push('HAZARDOUS Air Quality (AQI: ' + aqiValue + ')\n\nHealth Impact: Serious health effects for everyone. Emergency conditions. Everyone may experience serious health effects.\n\nRecommendation: Stay indoors with air purifiers running. Avoid all outdoor activities. Wear N95 masks if you must go outside. Monitor health symptoms closely.');
     } else if (aqiValue >= 201) {
-      suggestions.push('Very Unhealthy Air (AQI: ' + aqiValue + ')\nHealth Impact: Health warnings of emergency conditions. Everyone may experience serious health effects.\nRecommendation: Avoid outdoor activities. Keep windows closed. Use air purifiers indoors.');
+      airQuality.push('Very Unhealthy Air (AQI: ' + aqiValue + ')\n\nHealth Impact: Health warnings of emergency conditions. Everyone may experience serious health effects, especially respiratory and cardiovascular issues.\n\nRecommendation: Avoid outdoor activities completely. Keep windows and doors closed. Use air purifiers indoors. Vulnerable populations should remain indoors.');
     } else if (aqiValue >= 151) {
-      suggestions.push('Unhealthy Air Quality (AQI: ' + aqiValue + ')\nHealth Impact: Everyone may begin to experience health effects; sensitive groups at higher risk.\nRecommendation: Limit prolonged outdoor exertion. Sensitive groups should avoid outdoor activities.');
+      airQuality.push('Unhealthy Air Quality (AQI: ' + aqiValue + ')\n\nHealth Impact: Everyone may begin to experience health effects. Sensitive groups at significantly higher risk of respiratory issues.\n\nRecommendation: Limit prolonged outdoor exertion. Sensitive groups including children, elderly, and those with respiratory conditions should avoid outdoor activities.');
     } else if (aqiValue >= 101) {
-      suggestions.push('Unhealthy for Sensitive Groups (AQI: ' + aqiValue + ')\nHealth Impact: People with respiratory conditions may experience symptoms.\nRecommendation: Sensitive individuals should reduce outdoor activities. Consider wearing masks outdoors.');
+      airQuality.push('Unhealthy for Sensitive Groups (AQI: ' + aqiValue + ')\n\nHealth Impact: People with respiratory or heart conditions, children, and elderly may experience symptoms.\n\nRecommendation: Sensitive individuals should reduce outdoor activities. Consider wearing masks when outdoors. Monitor air quality updates.');
+    } else {
+      airQuality.push('Air quality is within safe ranges. Good conditions for outdoor activities.');
     }
   }
 
-  // PM2.5 Analysis - Only show if unsafe
+  // PM2.5 Analysis
   if (pm25 !== null && pm25 > 55.5) {
-    suggestions.push('High PM2.5 Levels (' + pm25.toFixed(1) + ' µg/m³)\nHealth Impact: Fine particles can penetrate deep into lungs, causing respiratory issues.\nRecommendation: Stay indoors. Use HEPA air filters. Monitor symptoms like coughing or shortness of breath.');
+    airQuality.push('\n\nHigh PM2.5 Levels (' + pm25.toFixed(1) + ' µg/m³)\n\nHealth Impact: Fine particles can penetrate deep into lungs and bloodstream, causing respiratory and cardiovascular issues.\n\nRecommendation: Stay indoors with HEPA air filters. Avoid strenuous activities. Monitor symptoms like coughing or shortness of breath.');
   } else if (pm25 !== null && pm25 > 35.5) {
-    suggestions.push('Elevated PM2.5 (' + pm25.toFixed(1) + ' µg/m³)\nSensitive groups should limit outdoor exposure. Consider indoor exercise alternatives.');
+    airQuality.push('\n\nElevated PM2.5 (' + pm25.toFixed(1) + ' µg/m³)\n\nSensitive groups should limit outdoor exposure. Consider indoor exercise alternatives.');
   }
 
-  // Temperature Analysis - Only show if unsafe
+  // Temperature Analysis
   if (temperature !== null) {
     if (temperature > 35) {
-      suggestions.push('Extreme Heat Warning (' + temperature.toFixed(1) + '°C)\nHealth Impact: Risk of heat exhaustion, heat stroke, and dehydration.\nRecommendation: Stay hydrated (drink 2-3L water). Avoid outdoor activities 10 AM to 4 PM. Wear light, loose clothing. Use cooling methods.');
+      weatherConditions.push('Extreme Heat Warning (' + temperature.toFixed(1) + '°C)\n\nHealth Impact: High risk of heat exhaustion, heat stroke, and severe dehydration.\n\nRecommendation: Stay hydrated by drinking 2-3 liters of water throughout the day. Avoid outdoor activities between 10 AM and 4 PM. Wear light, loose-fitting clothing. Use cooling methods like fans or air conditioning. Check on vulnerable individuals.');
     } else if (temperature < 10) {
-      suggestions.push('Cold Weather Alert (' + temperature.toFixed(1) + '°C)\nHealth Impact: Risk of hypothermia and frostbite with prolonged exposure.\nRecommendation: Dress in layers. Cover extremities. Limit outdoor exposure time. Stay dry.');
+      weatherConditions.push('Cold Weather Alert (' + temperature.toFixed(1) + '°C)\n\nHealth Impact: Risk of hypothermia and frostbite with prolonged exposure.\n\nRecommendation: Dress in multiple layers. Cover all exposed skin, especially extremities. Limit outdoor exposure time. Keep dry to maintain body heat. Seek warm shelter regularly.');
+    } else {
+      weatherConditions.push('Temperature is within comfortable range (' + temperature.toFixed(1) + '°C). Safe for outdoor activities.');
     }
   }
 
-  // Wave Height Analysis - Only show if unsafe
+  // Rain Analysis
+  if (rain !== null && rain > 10) {
+    weatherConditions.push('\n\nHeavy Rainfall Alert (' + rain.toFixed(1) + 'mm)\n\nRisk of flooding, reduced visibility, and hazardous road conditions. Avoid unnecessary travel. If driving is essential, reduce speed and maintain safe distance. Watch for standing water and flooded areas.');
+  }
+
+  // Wave Height Analysis
   if (waveHeight !== null) {
     if (waveHeight > 4) {
-      suggestions.push('Dangerous Sea Conditions (Wave Height: ' + waveHeight.toFixed(1) + 'm)\nHigh waves pose significant danger to swimmers and small vessels.\nRecommendation: Avoid beach activities, swimming, and boating. Stay away from coastal areas.');
+      marineConditions.push('Dangerous Sea Conditions (Wave Height: ' + waveHeight.toFixed(1) + 'm)\n\nHigh waves pose significant danger to all marine activities. Risk of capsizing for small vessels.\n\nRecommendation: Avoid all beach activities, swimming, and boating. Stay away from coastal areas and piers. Heed all marine warnings and closures.');
     } else if (waveHeight > 2) {
-      suggestions.push('Moderate Wave Conditions (Wave Height: ' + waveHeight.toFixed(1) + 'm)\nCaution advised for water activities. Strong swimmers only. Avoid small boats.');
+      marineConditions.push('Moderate Wave Conditions (Wave Height: ' + waveHeight.toFixed(1) + 'm)\n\nCaution advised for water activities. Suitable for experienced swimmers only. Small boats should avoid going out.\n\nRecommendation: Wear life jackets. Stay close to shore. Monitor weather updates continuously.');
+    } else {
+      marineConditions.push('Marine conditions are safe (Wave Height: ' + waveHeight.toFixed(1) + 'm). Good conditions for water activities.');
     }
   }
 
-  // Rain Analysis - Only show if unsafe
-  if (rain !== null && rain > 10) {
-    suggestions.push('Heavy Rainfall (' + rain.toFixed(1) + 'mm)\nRisk of flooding and reduced visibility. Avoid unnecessary travel. Drive carefully if you must go out.');
-  }
+  // Build structured response
+  let response = 'AIR QUALITY CONDITIONS\n\n';
+  response += airQuality.length > 0 ? airQuality.join('\n') : 'All air quality parameters are within safe ranges.';
+  
+  response += '\n\n\nWEATHER CONDITIONS\n\n';
+  response += weatherConditions.length > 0 ? weatherConditions.join('\n') : 'All weather conditions are within safe ranges.';
+  
+  response += '\n\n\nMARINE CONDITIONS\n\n';
+  response += marineConditions.length > 0 ? marineConditions.join('\n') : 'All marine conditions are within safe ranges.';
 
-  // Default message if all conditions are safe
-  if (suggestions.length === 0) {
-    suggestions.push('All Environmental Conditions are Safe\nAll monitored parameters are within safe ranges. Great time for outdoor activities!');
-  }
-
-  return suggestions.join('\n\n');
+  return response;
 }
 
 export const getSuggestions = async (req, res) => {
@@ -122,20 +135,37 @@ Safe Ranges Reference:
 - Wave Height: <2m (Safe), 2-4m (Moderate), >4m (Dangerous)
 - Rain: <10mm (Normal), >10mm (Heavy)
 
-IMPORTANT: Only generate alerts for conditions outside safe ranges. If all values are within safe ranges, provide a brief message confirming conditions are safe.
+IMPORTANT: Structure your response in THREE separate sections with clear headings. Each section must ONLY discuss its specific parameters:
 
-For each unsafe condition, provide:
-1. Alert severity and condition name
-2. Health impacts or safety concerns, especially for sensitive groups
-3. Clear, actionable suggestions and safety precautions
-4. Necessary preparations or actions users should take
+AIR QUALITY CONDITIONS
+[ONLY analyze AQI, PM2.5, and PM10. Include their current status, health impacts, and air quality recommendations. Do NOT mention temperature, weather, humidity, or marine conditions here.]
 
-Always strive to provide accurate, helpful, and timely information to keep users well-informed and safe. Keep responses concise and practical. Do not use emojis, asterisks, or dashes for formatting.`;
+WEATHER CONDITIONS
+[ONLY analyze temperature, humidity, wind speed, and rain. Include weather status and weather-related safety recommendations. Do NOT mention air quality or marine conditions here.]
+
+MARINE CONDITIONS
+[ONLY analyze wave height, sea temperature, and ocean currents. Include marine safety status and water activity recommendations. Do NOT mention air quality or weather here.]
+
+CRITICAL RULES:
+- Keep each section strictly separated and focused only on its own parameters
+- Do not mix parameters between sections
+- If data is unavailable for a section, state that clearly within that section only
+- Do not use asterisks, emojis, or bullet points
+- Use plain text with clear paragraph breaks
+- Keep language professional and actionable
+- Only mention conditions outside safe ranges OR confirm if conditions are safe within each specific section`;
 
       const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
       const result = await model.generateContent(prompt);
       const response = await result.response;
-      suggestions = response.text();
+      let rawText = response.text();
+      
+      // Remove asterisks and clean up formatting
+      suggestions = rawText
+        .replace(/\*\*/g, '')  // Remove bold markers
+        .replace(/\*/g, '')    // Remove all asterisks
+        .replace(/#{1,6}\s/g, '') // Remove markdown headers
+        .trim();
     } catch (geminiError) {
       console.warn('Gemini API failed, using rule-based suggestions:', geminiError.message);
       suggestions = generateRuleBasedSuggestions(aqiValue, pm25, pm10, temperature, humidity, windSpeed, rain, waveHeight, seaTemp, currentVelocity);
