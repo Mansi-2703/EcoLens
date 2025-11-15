@@ -65,6 +65,14 @@ export default function App() {
           </header>
         )}
 
+        {/* Show header on ecobot page */}
+        {activePage === "ecobot" && (
+          <header className="header">
+            <h2 className="gradient-text">EcoBot</h2>
+            <p className="coords">AI-powered environmental assistant</p>
+          </header>
+        )}
+
         <div className="page-content">
           {/* 🌍 Dashboard shows Global Air Quality Monitor */}
           {activePage === "dashboard" && <GlobePage onPick={handleGlobePick} />}
@@ -83,6 +91,9 @@ export default function App() {
           {activePage === "aqi" && <Aqi />}
           {activePage === "marine" && <Marine />}
           {activePage === "climate" && <Climate />}
+
+          {/* AI Chatbot page */}
+          {activePage === "ecobot" && <div className="page">EcoBot Page</div>}
         </div>
       </main>
     </div>

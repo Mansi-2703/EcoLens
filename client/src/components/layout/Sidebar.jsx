@@ -40,6 +40,13 @@ export default function Sidebar({ isOpen = true, onToggle = () => {}, onNavigate
             Climate Trends
           </button>
         </div>
+
+        <div className="nav-group">
+          <h4 className="group-title">AI Chatbot</h4>
+          <button className="navbutton" title="EcoBot" onClick={() => onNavigate('ecobot')}>
+            EcoBot
+          </button>
+        </div>
       </nav>
     </aside>
   );
