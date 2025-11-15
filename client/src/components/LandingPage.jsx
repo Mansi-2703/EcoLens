@@ -75,7 +75,7 @@ export default function LandingPage({ onGetStarted }) {
           margin: 0 0 20px 0;
           color: rgba(255, 255, 255, 0.62);
           letter-spacing: -2px;
-          -webkit-text-stroke: 4px #0a350aff;
+          -webkit-text-stroke: 4px #072f3bff;
           text-stroke: 4px #357235ff;
         }
 
