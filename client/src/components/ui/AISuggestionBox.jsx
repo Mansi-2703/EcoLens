@@ -37,29 +37,28 @@ export default function AISuggestionBox({ aqiData, weatherData, marineData }) {
   const parseSuggestionsByCategory = (suggestionsText) => {
     if (!suggestionsText) return null;
 
-    const sections = suggestionsText.split('\n\n');
     const categories = {
-      aqi: [],
-      weather: [],
-      marine: [],
-      general: []
+      aqi: '',
+      weather: '',
+      marine: ''
     };
 
-    sections.forEach(section => {
-      const lowerSection = section.toLowerCase();
-      if (lowerSection.includes('air quality') || lowerSection.includes('aqi') || 
-          lowerSection.includes('pm2.5') || lowerSection.includes('pm10')) {
-        categories.aqi.push(section);
-      } else if (lowerSection.includes('temperature') || lowerSection.includes('heat') || 
-                 lowerSection.includes('cold') || lowerSection.includes('rain')) {
-        categories.weather.push(section);
-      } else if (lowerSection.includes('wave') || lowerSection.includes('sea') || 
-                 lowerSection.includes('marine') || lowerSection.includes('ocean')) {
-        categories.marine.push(section);
-      } else if (section.trim()) {
-        categories.general.push(section);
-      }
-    });
+    // Split by section headers
+    const aqiMatch = suggestionsText.match(/AIR QUALITY CONDITIONS\s+([\s\S]*?)(?=WEATHER CONDITIONS|$)/i);
+    const weatherMatch = suggestionsText.match(/WEATHER CONDITIONS\s+([\s\S]*?)(?=MARINE CONDITIONS|$)/i);
+    const marineMatch = suggestionsText.match(/MARINE CONDITIONS\s+([\s\S]*?)$/i);
+
+    if (aqiMatch && aqiMatch[1]) {
+      categories.aqi = aqiMatch[1].trim();
+    }
+
+    if (weatherMatch && weatherMatch[1]) {
+      categories.weather = weatherMatch[1].trim();
+    }
+
+    if (marineMatch && marineMatch[1]) {
+      categories.marine = marineMatch[1].trim();
+    }
 
     return categories;
   };
@@ -92,37 +91,29 @@ export default function AISuggestionBox({ aqiData, weatherData, marineData }) {
 
       {!loading && !error && categorizedSuggestions && (
         <div className="ai-suggestions-content">
-          {categorizedSuggestions.aqi.length > 0 && (
+          {categorizedSuggestions.aqi && (
             <div className="suggestion-category">
               <h5 className="category-title">Air Quality</h5>
               <div className="category-content">
-                {categorizedSuggestions.aqi.join('\n')}
+                {categorizedSuggestions.aqi}
               </div>
             </div>
           )}
 
-          {categorizedSuggestions.weather.length > 0 && (
+          {categorizedSuggestions.weather && (
             <div className="suggestion-category">
               <h5 className="category-title">Weather Conditions</h5>
               <div className="category-content">
-                {categorizedSuggestions.weather.join('\n')}
+                {categorizedSuggestions.weather}
               </div>
             </div>
           )}
 
-          {categorizedSuggestions.marine.length > 0 && (
+          {categorizedSuggestions.marine && (
             <div className="suggestion-category">
               <h5 className="category-title">Marine Conditions</h5>
               <div className="category-content">
-                {categorizedSuggestions.marine.join('\n')}
-              </div>
-            </div>
-          )}
-
-          {categorizedSuggestions.general.length > 0 && (
-            <div className="suggestion-category">
-              <div className="category-content">
-                {categorizedSuggestions.general.join('\n')}
+                {categorizedSuggestions.marine}
               </div>
             </div>
           )}
